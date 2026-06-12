@@ -293,11 +293,12 @@ export default function SchoolGame3D() {
   function hacerEjercicio(ej: Exercise) {
     setDialogo(null);
     setAnimEjercicio(ej);
+    // el personaje ejecuta la animación del ejercicio en la escena 3D
     setTimeout(() => {
       setAnimEjercicio(null);
       setCarga((c) => reducirTotal(c, ALIVIO_EJERCICIO));
       setDialogo({ tipo: "puente", ejercicio: ej }); // puente juego → vida real (3.5)
-    }, 1800);
+    }, 3200);
   }
 
   function responderPuente(ej: Exercise, loHizo: boolean) {
@@ -339,6 +340,7 @@ export default function SchoolGame3D() {
         objetivo={objetivo}
         orbe={orbe}
         escalaX={escalaX}
+        animacionEjercicio={animEjercicio?.animacion ?? null}
         onSuelo={tocarSuelo}
         onNpc={tocarNpc}
         onOrbeLlega={llegoOrbe}
@@ -375,14 +377,13 @@ export default function SchoolGame3D() {
 
       {ruido && <div className="ruido-fuerte">💥 ¡RUIDO FUERTE!</div>}
 
+      {/* banner no bloqueante: deja ver la animación del personaje en la escena */}
       {animEjercicio && (
-        <div className="velo" style={{ alignItems: "center" }}>
-          <div className="dialogo" style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "3.4rem" }}>{animEjercicio.emoji}</div>
-            <p className="dialogo-texto">
-              Tu personaje está haciendo: <strong>{animEjercicio.nombre}</strong>…
-            </p>
-          </div>
+        <div className="banner-ejercicio">
+          <span style={{ fontSize: "1.8rem" }}>{animEjercicio.emoji}</span>
+          <span>
+            Tu personaje está haciendo: <strong>{animEjercicio.nombre}</strong>…
+          </span>
         </div>
       )}
 

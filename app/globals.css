@@ -420,6 +420,26 @@ a {
   animation: burbuja-late 1.6s ease-in-out infinite;
 }
 
+.banner-ejercicio {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--verde);
+  border-radius: 16px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  max-width: 88%;
+  box-shadow: var(--sombra);
+  pointer-events: none;
+  animation: sube 0.25s ease-out;
+}
+
 .salir-enlace {
   position: absolute;
   top: 10px;

@@ -1,6 +1,8 @@
 "use client";
 
-// Personaje low-poly 3D (niño/NPC/adulto). Arte provisional reemplazable.
+// Personaje low-poly 3D (niño/NPC/adulto) con extremidades articuladas.
+// Animaciones: caminata (al desplazarse) y un arquetipo por tipo de ejercicio
+// (salto, correr en el sitio, empujar, calma). Arte provisional reemplazable.
 // La guatita translúcida muestra la acumulación cualitativa de emociones
 // (interocepción, 3.3): segmentos de color apilados, sin números visibles.
 
@@ -8,6 +10,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { ChargeMap, CHARGE_MAX, DISPLACENTERAS, EMOTIONS, totalCharge } from "@/lib/emotions";
+import { ExerciseAnimation } from "@/lib/exercises";
 import { AvatarConfig } from "@/lib/storage";
 
 interface Props {
@@ -19,9 +22,15 @@ interface Props {
   /** tiembla suavemente cuando está abrumado */
   abrumado?: boolean;
   esAdulto?: boolean;
+  /** true mientras el personaje se desplaza por la sala */
+  caminando?: boolean;
+  /** animación del ejercicio en práctica; tiene prioridad sobre la caminata */
+  ejercicio?: ExerciseAnimation | null;
 }
 
 const BELLY_HEIGHT = 0.5; // alto interno disponible para los segmentos de carga
+const BRAZO_BASE_I = 0.25; // inclinación de reposo de los brazos
+const BRAZO_BASE_D = -0.25;
 
 export default function CharacterMesh({
   piel,
@@ -31,15 +40,79 @@ export default function CharacterMesh({
   charge = {},
   abrumado = false,
   esAdulto = false,
+  caminando = false,
+  ejercicio = null,
 }: Props) {
   const grupo = useRef<THREE.Group>(null);
+  const piernaI = useRef<THREE.Group>(null);
+  const piernaD = useRef<THREE.Group>(null);
+  const brazoI = useRef<THREE.Group>(null);
+  const brazoD = useRef<THREE.Group>(null);
 
-  useFrame((state) => {
-    if (!grupo.current) return;
+  useFrame((state, delta) => {
+    const g = grupo.current;
+    const pI = piernaI.current;
+    const pD = piernaD.current;
+    const bI = brazoI.current;
+    const bD = brazoD.current;
+    if (!g || !pI || !pD || !bI || !bD) return;
+
     const t = state.clock.elapsedTime;
-    // respiración sutil siempre; temblor si está abrumado
-    grupo.current.position.y = Math.sin(t * 2) * 0.02;
-    grupo.current.rotation.z = abrumado ? Math.sin(t * 18) * 0.05 : 0;
+
+    // objetivos de pose según el estado actual
+    let alto = Math.sin(t * 2) * 0.02; // respiración sutil en reposo
+    let inclinacion = 0;
+    let piernaIx = 0;
+    let piernaDx = 0;
+    let brazoIx = 0;
+    let brazoDx = 0;
+    let brazoIz = BRAZO_BASE_I;
+    let brazoDz = BRAZO_BASE_D;
+
+    if (ejercicio === "salto") {
+      // saltos de estrella: el cuerpo sube y los brazos se abren hacia arriba
+      const f = Math.abs(Math.sin(t * 5));
+      alto = f * 0.45;
+      brazoIz = BRAZO_BASE_I + f * 2.3;
+      brazoDz = BRAZO_BASE_D - f * 2.3;
+    } else if (ejercicio === "correr") {
+      const f = Math.sin(t * 14);
+      piernaIx = f * 0.95;
+      piernaDx = -f * 0.95;
+      brazoIx = -f * 0.85;
+      brazoDx = f * 0.85;
+      alto = Math.abs(Math.sin(t * 14)) * 0.06;
+    } else if (ejercicio === "empujar") {
+      // brazos al frente y cuerpo inclinado, con pequeño pulso de esfuerzo
+      brazoIx = -1.35 + Math.sin(t * 6) * 0.08;
+      brazoDx = -1.35 + Math.sin(t * 6) * 0.08;
+      inclinacion = 0.28;
+    } else if (ejercicio === "calma") {
+      // respiración amplia y lenta: los brazos suben y bajan con el aire
+      const s = (Math.sin(t * 1.7) + 1) / 2;
+      brazoIz = BRAZO_BASE_I + s * 2.1;
+      brazoDz = BRAZO_BASE_D - s * 2.1;
+      alto = Math.sin(t * 1.7) * 0.07;
+    } else if (caminando) {
+      const f = Math.sin(t * 9);
+      piernaIx = f * 0.55;
+      piernaDx = -f * 0.55;
+      brazoIx = -f * 0.45;
+      brazoDx = f * 0.45;
+      alto = Math.abs(Math.sin(t * 9)) * 0.04;
+    }
+
+    // transición suave hacia la pose objetivo
+    const k = 14;
+    pI.rotation.x = THREE.MathUtils.damp(pI.rotation.x, piernaIx, k, delta);
+    pD.rotation.x = THREE.MathUtils.damp(pD.rotation.x, piernaDx, k, delta);
+    bI.rotation.x = THREE.MathUtils.damp(bI.rotation.x, brazoIx, k, delta);
+    bD.rotation.x = THREE.MathUtils.damp(bD.rotation.x, brazoDx, k, delta);
+    bI.rotation.z = THREE.MathUtils.damp(bI.rotation.z, brazoIz, k, delta);
+    bD.rotation.z = THREE.MathUtils.damp(bD.rotation.z, brazoDz, k, delta);
+    g.position.y = THREE.MathUtils.damp(g.position.y, alto, k, delta);
+    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, inclinacion, 10, delta);
+    g.rotation.z = abrumado ? Math.sin(t * 18) * 0.05 : 0;
   });
 
   // segmentos de carga apilados de abajo hacia arriba en la guatita
@@ -47,10 +120,10 @@ export default function CharacterMesh({
   const segmentos = DISPLACENTERAS.flatMap((id) => {
     const v = charge[id] ?? 0;
     if (v <= 0) return [];
-    const alto = (v / CHARGE_MAX) * BELLY_HEIGHT;
-    const y = -BELLY_HEIGHT / 2 + acumulado + alto / 2;
-    acumulado += alto;
-    return [{ color: EMOTIONS[id].color, alto, y }];
+    const altoSeg = (v / CHARGE_MAX) * BELLY_HEIGHT;
+    const y = -BELLY_HEIGHT / 2 + acumulado + altoSeg / 2;
+    acumulado += altoSeg;
+    return [{ color: EMOTIONS[id].color, alto: altoSeg, y }];
   });
 
   const total = Math.min(totalCharge(charge), CHARGE_MAX);
@@ -58,15 +131,19 @@ export default function CharacterMesh({
 
   return (
     <group ref={grupo} scale={escala}>
-      {/* piernas */}
-      <mesh position={[-0.16, 0.3, 0]}>
-        <cylinderGeometry args={[0.09, 0.09, 0.6, 8]} />
-        <meshStandardMaterial color="#3f5a78" flatShading />
-      </mesh>
-      <mesh position={[0.16, 0.3, 0]}>
-        <cylinderGeometry args={[0.09, 0.09, 0.6, 8]} />
-        <meshStandardMaterial color="#3f5a78" flatShading />
-      </mesh>
+      {/* piernas articuladas en la cadera */}
+      <group ref={piernaI} position={[-0.16, 0.62, 0]}>
+        <mesh position={[0, -0.31, 0]}>
+          <cylinderGeometry args={[0.09, 0.09, 0.6, 8]} />
+          <meshStandardMaterial color="#3f5a78" flatShading />
+        </mesh>
+      </group>
+      <group ref={piernaD} position={[0.16, 0.62, 0]}>
+        <mesh position={[0, -0.31, 0]}>
+          <cylinderGeometry args={[0.09, 0.09, 0.6, 8]} />
+          <meshStandardMaterial color="#3f5a78" flatShading />
+        </mesh>
+      </group>
 
       {/* torso */}
       <mesh position={[0, 0.95, 0]}>
@@ -74,23 +151,27 @@ export default function CharacterMesh({
         <meshStandardMaterial color={polera} flatShading />
       </mesh>
 
-      {/* brazos */}
-      <mesh position={[-0.44, 0.95, 0]} rotation={[0, 0, 0.25]}>
-        <capsuleGeometry args={[0.08, 0.45, 4, 8]} />
-        <meshStandardMaterial color={polera} flatShading />
-      </mesh>
-      <mesh position={[0.44, 0.95, 0]} rotation={[0, 0, -0.25]}>
-        <capsuleGeometry args={[0.08, 0.45, 4, 8]} />
-        <meshStandardMaterial color={polera} flatShading />
-      </mesh>
-      <mesh position={[-0.5, 0.68, 0]}>
-        <sphereGeometry args={[0.09, 8, 8]} />
-        <meshStandardMaterial color={piel} flatShading />
-      </mesh>
-      <mesh position={[0.5, 0.68, 0]}>
-        <sphereGeometry args={[0.09, 8, 8]} />
-        <meshStandardMaterial color={piel} flatShading />
-      </mesh>
+      {/* brazos articulados en el hombro */}
+      <group ref={brazoI} position={[-0.4, 1.2, 0]} rotation={[0, 0, BRAZO_BASE_I]}>
+        <mesh position={[0, -0.26, 0]}>
+          <capsuleGeometry args={[0.08, 0.45, 4, 8]} />
+          <meshStandardMaterial color={polera} flatShading />
+        </mesh>
+        <mesh position={[0, -0.55, 0]}>
+          <sphereGeometry args={[0.09, 8, 8]} />
+          <meshStandardMaterial color={piel} flatShading />
+        </mesh>
+      </group>
+      <group ref={brazoD} position={[0.4, 1.2, 0]} rotation={[0, 0, BRAZO_BASE_D]}>
+        <mesh position={[0, -0.26, 0]}>
+          <capsuleGeometry args={[0.08, 0.45, 4, 8]} />
+          <meshStandardMaterial color={polera} flatShading />
+        </mesh>
+        <mesh position={[0, -0.55, 0]}>
+          <sphereGeometry args={[0.09, 8, 8]} />
+          <meshStandardMaterial color={piel} flatShading />
+        </mesh>
+      </group>
 
       {/* guatita translúcida con la carga acumulada (3.3) */}
       <group position={[0, 0.88, 0.27]}>

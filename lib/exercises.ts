@@ -4,6 +4,9 @@
 
 export type ExerciseIntensity = "intenso" | "suave";
 
+/** Arquetipo de animación que ejecuta el personaje 3D al practicar el ejercicio */
+export type ExerciseAnimation = "salto" | "correr" | "empujar" | "calma";
+
 export interface Exercise {
   id: string;
   nombre: string;
@@ -12,6 +15,7 @@ export interface Exercise {
   emoji: string;
   /** intenso = input propioceptivo fuerte (perfil buscador); suave = bajo estímulo (perfil hipersensible) */
   intensidad: ExerciseIntensity;
+  animacion: ExerciseAnimation;
 }
 
 export const EXERCISE_LIBRARY: Exercise[] = [
@@ -21,6 +25,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
     instruccion: "Toma aire por la nariz contando hasta 4 y suéltalo despacito por la boca.",
     emoji: "🌬️",
     intensidad: "suave",
+    animacion: "calma",
   },
   {
     id: "saltar",
@@ -28,6 +33,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
     instruccion: "Salta 10 veces abriendo brazos y piernas como una estrella.",
     emoji: "⭐",
     intensidad: "intenso",
+    animacion: "salto",
   },
   {
     id: "empujar-pared",
@@ -35,6 +41,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
     instruccion: "Pon las manos en la pared y empuja fuerte contando hasta 10.",
     emoji: "🧱",
     intensidad: "intenso",
+    animacion: "empujar",
   },
   {
     id: "correr-sitio",
@@ -42,6 +49,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
     instruccion: "Corre sin moverte del lugar, levantando bien las rodillas, hasta contar 20.",
     emoji: "🏃",
     intensidad: "intenso",
+    animacion: "correr",
   },
   {
     id: "apretar-manos",
@@ -49,6 +57,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
     instruccion: "Aprieta fuerte los puños contando hasta 5 y suéltalos despacio. Repite 3 veces.",
     emoji: "✊",
     intensidad: "suave",
+    animacion: "calma",
   },
   {
     id: "tomar-agua",
@@ -56,6 +65,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
     instruccion: "Toma un vaso de agua despacio, sorbo a sorbo.",
     emoji: "💧",
     intensidad: "suave",
+    animacion: "calma",
   },
   {
     id: "estirarse",
@@ -63,6 +73,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
     instruccion: "Estira los brazos bien arriba y luego tócate la punta de los pies, como un gato que despierta.",
     emoji: "🐱",
     intensidad: "suave",
+    animacion: "calma",
   },
 ];
 

@@ -9,6 +9,7 @@ import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import CharacterMesh from "./CharacterMesh";
 import { ChargeMap, EmotionId, EMOTIONS } from "@/lib/emotions";
+import { ExerciseAnimation } from "@/lib/exercises";
 import { AvatarConfig } from "@/lib/storage";
 
 export interface Npc3D {
@@ -38,6 +39,8 @@ interface SceneProps {
   orbe: Orbe | null;
   /** compresión horizontal de la sala en pantallas angostas (1 = escritorio) */
   escalaX: number;
+  /** animación del ejercicio que el personaje está practicando */
+  animacionEjercicio: ExerciseAnimation | null;
   onSuelo: (x: number, z: number) => void;
   onNpc: (id: string) => void;
   onOrbeLlega: () => void;
@@ -80,25 +83,39 @@ function Jugador({
   charge,
   abrumado,
   objetivo,
+  animacionEjercicio,
   jugadorRef,
 }: {
   avatar: AvatarConfig;
   charge: ChargeMap;
   abrumado: boolean;
   objetivo: [number, number];
+  animacionEjercicio: ExerciseAnimation | null;
   jugadorRef: React.RefObject<THREE.Group | null>;
 }) {
+  // estado de caminata con histéresis para activar el ciclo de animación
+  const [caminando, setCaminando] = useState(false);
+  const caminandoRef = useRef(false);
+
   useFrame((_, delta) => {
     const g = jugadorRef.current;
     if (!g) return;
     const destino = new THREE.Vector3(objetivo[0], 0, objetivo[1]);
     const paso = Math.min(delta * 3.2, 1);
     g.position.lerp(destino, paso);
-    // mirar hacia donde camina
     const dx = destino.x - g.position.x;
     const dz = destino.z - g.position.z;
-    if (dx * dx + dz * dz > 0.01) {
+    const dist2 = dx * dx + dz * dz;
+    // mirar hacia donde camina
+    if (dist2 > 0.01) {
       g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, Math.atan2(dx, dz), 0.1);
+    } else if (!animacionEjercicio) {
+      g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, 0, 0.06); // vuelve a mirar de frente
+    }
+    const enMovimiento = dist2 > 0.04;
+    if (enMovimiento !== caminandoRef.current) {
+      caminandoRef.current = enMovimiento;
+      setCaminando(enMovimiento);
     }
   });
 
@@ -111,6 +128,8 @@ function Jugador({
         polera={avatar.polera}
         charge={charge}
         abrumado={abrumado}
+        caminando={caminando}
+        ejercicio={animacionEjercicio}
       />
       {abrumado && (
         <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -246,6 +265,7 @@ export default function SchoolScene({
   objetivo,
   orbe,
   escalaX,
+  animacionEjercicio,
   onSuelo,
   onNpc,
   onOrbeLlega,
@@ -309,6 +329,7 @@ export default function SchoolScene({
         charge={charge}
         abrumado={abrumado}
         objetivo={objetivo}
+        animacionEjercicio={animacionEjercicio}
         jugadorRef={jugadorRef}
       />
 
