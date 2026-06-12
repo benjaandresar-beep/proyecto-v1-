@@ -148,8 +148,13 @@ function Jugador({
     }
   });
 
+  // La posición inicial se fija UNA sola vez; el desplazamiento es exclusivamente
+  // imperativo en useFrame. Si se pasara `objetivo` como prop de posición, R3F
+  // teletransportaría al personaje en cada toque y la caminata nunca se vería.
+  const posicionInicial = useRef<[number, number, number]>([objetivo[0], 0, objetivo[1]]);
+
   return (
-    <group ref={jugadorRef} position={[objetivo[0], 0, objetivo[1]]}>
+    <group ref={jugadorRef} position={posicionInicial.current}>
       <CharacterMesh
         piel={avatar.piel}
         pelo={avatar.pelo}
