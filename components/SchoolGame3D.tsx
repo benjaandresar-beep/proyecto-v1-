@@ -47,27 +47,31 @@ const POSICIONES: Record<string, [number, number]> = {
   profe: [-2.2, -3.6],
 };
 
-const NPCS_3D: Npc3D[] = [
-  ...COMPANEROS_BASE.map((c) => ({
-    id: c.id,
-    nombre: c.nombre,
-    piel: c.piel,
-    pelo: c.peloEstilo,
-    colorPelo: c.colorPelo,
-    polera: c.polera,
-    pos: POSICIONES[c.id],
-  })),
-  {
-    id: PROFE_BASE.id,
-    nombre: PROFE_BASE.nombre,
-    piel: PROFE_BASE.piel,
-    pelo: PROFE_BASE.peloEstilo,
-    colorPelo: PROFE_BASE.colorPelo,
-    polera: PROFE_BASE.polera,
-    pos: POSICIONES.profe,
-    esAdulto: true,
-  },
-];
+// En pantallas angostas (celular/tablet vertical) la sala se comprime en X
+// para que todos los personajes queden visibles sin alejar demasiado la cámara.
+function construirNpcs(escalaX: number): Npc3D[] {
+  return [
+    ...COMPANEROS_BASE.map((c) => ({
+      id: c.id,
+      nombre: c.nombre,
+      piel: c.piel,
+      pelo: c.peloEstilo,
+      colorPelo: c.colorPelo,
+      polera: c.polera,
+      pos: [POSICIONES[c.id][0] * escalaX, POSICIONES[c.id][1]] as [number, number],
+    })),
+    {
+      id: PROFE_BASE.id,
+      nombre: PROFE_BASE.nombre,
+      piel: PROFE_BASE.piel,
+      pelo: PROFE_BASE.peloEstilo,
+      colorPelo: PROFE_BASE.colorPelo,
+      polera: PROFE_BASE.polera,
+      pos: [POSICIONES.profe[0] * escalaX, POSICIONES.profe[1]] as [number, number],
+      esAdulto: true,
+    },
+  ];
+}
 
 type Dialogo =
   | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
@@ -85,6 +89,20 @@ export default function SchoolGame3D() {
     () => EXERCISE_LIBRARY.filter((e) => clinico.ejercicios.includes(e.id)),
     [clinico]
   );
+
+  // compresión horizontal según proporción de la pantalla (1 = escritorio)
+  const [escalaX, setEscalaX] = useState(1);
+  useEffect(() => {
+    const calcular = () => {
+      const aspecto = window.innerWidth / window.innerHeight;
+      setEscalaX(Math.min(1, Math.max(0.55, aspecto / 1.45)));
+    };
+    calcular();
+    window.addEventListener("resize", calcular);
+    return () => window.removeEventListener("resize", calcular);
+  }, []);
+
+  const npcs3d = useMemo(() => construirNpcs(escalaX), [escalaX]);
 
   const [carga, setCarga] = useState<ChargeMap>({});
   const [burbujas, setBurbujas] = useState<Record<string, EmotionId | undefined>>(
@@ -191,10 +209,13 @@ export default function SchoolGame3D() {
   function tocarNpc(id: string) {
     if (ocupadoRef.current) return;
     marcarInteraccion();
-    const pos = POSICIONES[id];
-    setObjetivo([pos[0] + 0.9, Math.min(pos[1] + 0.7, 4.4)]);
+    const npc = npcs3d.find((n) => n.id === id)!;
+    const limiteX = 6.2 * escalaX;
+    setObjetivo([
+      Math.max(-limiteX, Math.min(limiteX, npc.pos[0] + 0.9)),
+      Math.min(npc.pos[1] + 0.7, 4.4),
+    ]);
     const emocion = burbujas[id];
-    const npc = NPCS_3D.find((n) => n.id === id)!;
     setTimeout(() => {
       if (id === "profe") {
         setDialogo({ tipo: "profe-apertura" });
@@ -229,7 +250,7 @@ export default function SchoolGame3D() {
       setOrbe({
         key: Date.now(),
         color: info.color,
-        desde: [pos[0], 1.8, pos[1]],
+        desde: [pos[0] * escalaX, 1.8, pos[1]],
         emocion,
         nombre,
       });
@@ -313,10 +334,11 @@ export default function SchoolGame3D() {
         avatar={avatar}
         charge={carga}
         abrumado={abrumado}
-        npcs={NPCS_3D}
+        npcs={npcs3d}
         burbujas={burbujas}
         objetivo={objetivo}
         orbe={orbe}
+        escalaX={escalaX}
         onSuelo={tocarSuelo}
         onNpc={tocarNpc}
         onOrbeLlega={llegoOrbe}
