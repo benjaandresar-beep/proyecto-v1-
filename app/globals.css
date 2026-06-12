@@ -462,3 +462,169 @@ a {
   text-decoration: none;
   color: var(--tinta);
 }
+
+/* ---------- lado profesional ---------- */
+
+.campo {
+  display: block;
+  margin: 12px 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.campo input,
+.campo textarea,
+.campo select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 2px solid var(--borde);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  background: #fffdf8;
+}
+
+.campo input:focus,
+.campo textarea:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--acento);
+}
+
+.campo-titulo {
+  display: block;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 14px 0 8px;
+}
+
+.fila-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--borde);
+  cursor: pointer;
+  font-size: 0.97rem;
+}
+
+.fila-check input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.chip-intensidad {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.chip-intensidad.intenso { background: #fbe3df; color: #a33a2d; }
+.chip-intensidad.suave { background: #def0e6; color: #2d7a4f; }
+
+.ayuda {
+  color: var(--tinta-suave);
+  font-size: 0.92rem;
+  margin: 6px 0 10px;
+}
+
+.clave-juego {
+  display: block;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: #f3ecdd;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 10px 0;
+}
+
+.tarjeta .boton { margin-top: 10px; }
+
+.caso-tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.caso-principal {
+  flex: 1;
+  text-align: left;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+}
+
+.boton-archivar {
+  width: auto;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  margin: 0 !important;
+}
+
+/* bloques de la guía: revisión obligatoria (5.5) */
+.bloque-guia {
+  border: 2px solid var(--borde);
+  border-radius: 14px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.bloque-guia.confirmado { border-color: var(--verde); background: #f4faf6; }
+.bloque-guia.descartado { border-color: #d8d2c6; opacity: 0.65; }
+.bloque-guia.pendiente { border-color: #e8c46a; }
+
+.bloque-guia textarea {
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  background: #fffdf8;
+}
+
+.bloque-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.estado-chip {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 8px;
+}
+
+.estado-chip.pendiente { background: #fdf2d4; color: #8a6a14; }
+.estado-chip.confirmado { background: #def0e6; color: #2d7a4f; }
+.estado-chip.descartado { background: #eee8dc; color: #99917f; }
+
+/* impresión: solo la guía final */
+@media print {
+  body * { visibility: hidden; }
+  .imprimible, .imprimible * { visibility: visible; }
+  .imprimible {
+    position: absolute;
+    inset: 0;
+    box-shadow: none;
+    border: none;
+  }
+  .no-print { display: none !important; }
+}

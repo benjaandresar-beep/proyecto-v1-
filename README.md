@@ -4,10 +4,12 @@ Prototipo del **juego de regulación emocional** descrito en la *Especificación
 (plataforma clínica TEA · TDAH · AuDHD). Implementa el contexto **Escuela (MVP)** con la mecánica
 central completa y las salvaguardas clínicas obligatorias.
 
-> Alcance acordado: **solo el juego** (sin lado profesional). La ficha clínica, la guía para el
-> hogar y la clave de acceso quedan para fases posteriores. El "modo clínico" incluido es una
-> pantalla mínima que simula la configuración por caso que en el producto completo hará el
-> profesional desde su cuenta.
+> El prototipo cubre el **juego completo** (tres contextos) y un **lado profesional mínimo**
+> (`/pro`, sección 6 de la spec): casos por código, ficha → perfil, set de reguladores por caso,
+> clave que abre solo el juego, y guía para el hogar generada por plantillas con **revisión
+> editable obligatoria por bloques** (sin «aprobar todo», salvaguarda 5.5). Al no haber servidor
+> (despliegue estático), la cuenta y los casos viven en localStorage del dispositivo del
+> profesional; la autenticación es declarativa y de prototipo.
 
 ## Cómo correr
 
@@ -27,7 +29,8 @@ npm run build    # build de producción
 | `/casa` | Contexto Casa (4.2): hermanos y familia, cuidadora, ruido doméstico |
 | `/calle` | Contexto Calle (4.3): transeúntes que cambian de lugar, autos cruzando, bocinazos más frecuentes, papá que acompaña y audífonos que reducen el estímulo |
 | `/escuela-2d` | La misma mecánica en la escena 2D original, conservada para comparar en validaciones |
-| `/clinico` | Modo clínico: set de reguladores por caso (5.4) y ritmo de eventos |
+| `/clinico` | Config rápida del dispositivo: set de reguladores (5.4) y ritmo de eventos |
+| `/pro` | Lado profesional: registro/login declarativo, casos por código (6.1), ficha → perfil (6.2), guía con revisión por bloques (6.3), clave del juego (6.4) |
 
 Cada contexto entra siempre por su bloque de asentimiento (5.1) y comparte la mecánica central y
 las salvaguardas; cambian los NPC, la figura de apoyo, las líneas de diálogo, el estímulo

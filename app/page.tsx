@@ -55,9 +55,9 @@ export default function Inicio() {
       )}
 
       <p className="nota-pie">
-        <Link href="/clinico">Modo clínico</Link> · <Link href="/escuela-2d">Versión 2D</Link> ·
-        Prototipo de validación · El juego no guarda datos clínicos ni personales: todo queda solo
-        en este dispositivo.
+        <Link href="/pro">Lado profesional</Link> · <Link href="/clinico">Config rápida</Link> ·{" "}
+        <Link href="/escuela-2d">Versión 2D</Link> · Prototipo de validación · El juego no guarda
+        datos clínicos ni personales: todo queda solo en este dispositivo.
       </p>
     </main>
   );
