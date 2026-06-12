@@ -229,6 +229,9 @@ function NpcAnimado({
         position={[0, npc.esAdulto ? 3.1 : 2.5, 0]}
         center
         distanceFactor={factorEtiqueta}
+        // limita el z-index para que las etiquetas queden SIEMPRE bajo los overlays
+        // del juego (HUD 15, banner 18, velo 30, nubes/crisis 40)
+        zIndexRange={[12, 0]}
         style={{ pointerEvents: "none", textAlign: "center" }}
       >
         {emocion && (
