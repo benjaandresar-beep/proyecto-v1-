@@ -21,9 +21,10 @@ npm run build    # build de producción
 
 | Ruta | Qué es |
 | --- | --- |
-| `/` | Inicio: avatar, entrada a Escuela (Casa y Calle bloqueados, Fase 2) y logros del puente a la vida real |
-| `/avatar` | Editor del personaje 2D (piel, pelo, polera) |
-| `/escuela` | Bloque de asentimiento (5.1) y luego el juego |
+| `/` | Inicio: avatar 3D, entrada a Escuela (Casa y Calle bloqueados, Fase 2) y logros del puente a la vida real |
+| `/avatar` | Editor del personaje (piel, pelo, polera) con vista previa 3D |
+| `/escuela` | Bloque de asentimiento (5.1) y luego el juego en 3D |
+| `/escuela-2d` | La misma mecánica en la escena 2D original, conservada para comparar en validaciones |
 | `/clinico` | Modo clínico: set de reguladores por caso (5.4) y ritmo de eventos |
 
 ## Mecánica implementada (referencias a la spec)
@@ -56,7 +57,8 @@ Todo el estado (avatar, configuración, progreso) vive en `localStorage` del dis
 
 ## Qué es provisional
 
-- **Arte**: SVG plano generado en código, pensado para ser reemplazado por la ilustración final.
+- **Arte**: personajes y sala low-poly generados en código (Three.js) y SVG plano en la versión
+  2D, pensados para ser reemplazados por el arte final.
 - **Textos** (diálogos de NPC, asentimiento, mensajes): borradores que debe validar/reescribir el
   responsable clínico (reparto de responsabilidades, sección 10).
 - **Pesos internos** (cuánto sube/baja cada interacción): constantes en
@@ -64,5 +66,7 @@ Todo el estado (avatar, configuración, progreso) vive en `localStorage` del dis
 
 ## Stack
 
-Next.js 15 (App Router) + React 19 + TypeScript. Sin motor de juego: la escena es DOM/SVG con
-animaciones CSS (la spec descarta 3D y motores pesados, sección 9).
+Next.js 15 (App Router) + React 19 + TypeScript. La escena principal es 3D low-poly con Three.js
+(react-three-fiber + drei), por decisión del cliente posterior a la spec (la sección 9 de la spec
+excluía el 3D para acotar costo; se conserva la versión 2D en `/escuela-2d`). Los diálogos, el HUD
+y las salvaguardas son DOM/CSS compartidos entre ambas versiones.

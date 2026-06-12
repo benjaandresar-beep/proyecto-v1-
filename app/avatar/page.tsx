@@ -3,9 +3,13 @@
 // Editor de avatar 2D (sección 8 de la spec: "es lo primero que engancha").
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import AvatarSvg from "@/components/AvatarSvg";
 import { AvatarConfig, DEFAULT_AVATAR, storage } from "@/lib/storage";
+
+const CharacterPreview = dynamic(() => import("@/components/three/CharacterPreview"), {
+  ssr: false,
+});
 
 const PIELES = ["#f5d3b3", "#e8b88a", "#c98e5f", "#9c6a43", "#6e4a2f"];
 const PELOS: { id: AvatarConfig["pelo"]; nombre: string }[] = [
@@ -35,9 +39,7 @@ export default function EditorAvatar() {
       <h1 className="titulo">Mi personaje</h1>
       <p className="subtitulo">Hazlo como tú quieras</p>
 
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <AvatarSvg config={config} size={140} />
-      </div>
+      <CharacterPreview config={config} height={220} />
 
       <div className="tarjeta">
         <strong>Piel</strong>

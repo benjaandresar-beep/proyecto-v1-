@@ -1,14 +1,14 @@
 "use client";
 
-// Entrada al contexto Escuela (versión 3D). Antes de entrar, siempre el bloque
-// de advertencia y asentimiento (salvaguarda 5.1).
+// Versión 2D original del contexto Escuela, conservada para comparar ambas
+// representaciones durante la validación con familias y clínicos.
 
 import { useState } from "react";
-import SchoolGame3D from "@/components/SchoolGame3D";
+import SchoolGame from "@/components/SchoolGame";
 import AsentimientoEscuela from "@/components/AsentimientoEscuela";
 
-export default function Escuela() {
+export default function Escuela2D() {
   const [asentido, setAsentido] = useState(false);
   if (!asentido) return <AsentimientoEscuela onConfirmar={() => setAsentido(true)} />;
-  return <SchoolGame3D />;
+  return <SchoolGame />;
 }

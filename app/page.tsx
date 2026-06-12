@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import AvatarSvg from "@/components/AvatarSvg";
 import { AvatarConfig, DEFAULT_AVATAR, Progress, DEFAULT_PROGRESS, storage } from "@/lib/storage";
+
+const CharacterPreview = dynamic(() => import("@/components/three/CharacterPreview"), {
+  ssr: false,
+});
 
 export default function Inicio() {
   const [avatar, setAvatar] = useState<AvatarConfig>(DEFAULT_AVATAR);
@@ -22,7 +26,7 @@ export default function Inicio() {
       <p className="subtitulo">Un juego para practicar cómo volver a la calma</p>
 
       <div className="tarjeta" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-        <AvatarSvg config={avatar} size={130} />
+        <CharacterPreview config={avatar} height={210} />
         <Link href="/avatar" className="boton secundario" style={{ maxWidth: 260 }}>
           ✏️ Cambiar mi personaje
         </Link>
@@ -51,8 +55,9 @@ export default function Inicio() {
       )}
 
       <p className="nota-pie">
-        <Link href="/clinico">Modo clínico</Link> · Prototipo de validación · El juego no guarda datos
-        clínicos ni personales: todo queda solo en este dispositivo.
+        <Link href="/clinico">Modo clínico</Link> · <Link href="/escuela-2d">Versión 2D</Link> ·
+        Prototipo de validación · El juego no guarda datos clínicos ni personales: todo queda solo
+        en este dispositivo.
       </p>
     </main>
   );

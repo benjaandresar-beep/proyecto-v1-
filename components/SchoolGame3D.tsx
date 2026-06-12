@@ -1,14 +1,12 @@
 "use client";
 
-// Contexto Escuela (MVP) — motor de la mecánica central (secciones 3 y 4.1 de la spec):
-// burbujas emocionales con migración, acumulación en la guatita (interocepción),
-// ruido fuerte periódico, reguladores parciales con puente a la vida real,
-// figura de apoyo que baja fuerte pero no a cero, y crisis como pausa guiada de calma.
+// Contexto Escuela en 3D. Misma mecánica y salvaguardas que la versión 2D
+// (secciones 3 y 4.1 de la spec); cambia solo la representación de la escena.
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
-import AvatarSvg, { AvatarMood } from "@/components/AvatarSvg";
-import NpcSvg from "@/components/NpcSvg";
+import type { Npc3D, Orbe } from "@/components/three/SchoolScene";
 import {
   ChargeMap,
   CHARGE_MAX,
@@ -27,7 +25,6 @@ import {
   COMPANEROS_BASE,
   escalarA,
   LINEAS_NPC,
-  NpcBase,
   PROFE_BASE,
   reducirTotal,
   RESPAWN_BURBUJA_MS,
@@ -35,36 +32,52 @@ import {
 } from "@/lib/school";
 import { storage } from "@/lib/storage";
 
-// Personajes compartidos (lib/school.ts) + posiciones 2D en porcentaje de la escena
-interface NpcDef extends NpcBase {
-  x: number;
-  y: number;
-}
+const SchoolScene = dynamic(() => import("@/components/three/SchoolScene"), { ssr: false });
 
-const POSICIONES_2D: Record<string, { x: number; y: number }> = {
-  martin: { x: 14, y: 78 },
-  sofia: { x: 32, y: 90 },
-  tomas: { x: 50, y: 70 },
-  emilia: { x: 68, y: 88 },
-  lucas: { x: 86, y: 74 },
-  maite: { x: 60, y: 60 },
-  diego: { x: 8, y: 92 },
-  anto: { x: 90, y: 92 },
-  profe: { x: 24, y: 58 },
+// posiciones [x, z] en el piso de la sala 3D
+const POSICIONES: Record<string, [number, number]> = {
+  martin: [-5, 1],
+  sofia: [-2.5, 3.2],
+  tomas: [0.8, 0.8],
+  emilia: [3, 3.4],
+  lucas: [5.2, 0.2],
+  maite: [1.8, -2.2],
+  diego: [-4.6, 3.8],
+  anto: [5.6, 3.6],
+  profe: [-2.2, -3.6],
 };
 
-const COMPANEROS: NpcDef[] = COMPANEROS_BASE.map((c) => ({ ...c, ...POSICIONES_2D[c.id] }));
-const PROFE: NpcDef = { ...PROFE_BASE, ...POSICIONES_2D.profe };
+const NPCS_3D: Npc3D[] = [
+  ...COMPANEROS_BASE.map((c) => ({
+    id: c.id,
+    nombre: c.nombre,
+    piel: c.piel,
+    pelo: c.peloEstilo,
+    colorPelo: c.colorPelo,
+    polera: c.polera,
+    pos: POSICIONES[c.id],
+  })),
+  {
+    id: PROFE_BASE.id,
+    nombre: PROFE_BASE.nombre,
+    piel: PROFE_BASE.piel,
+    pelo: PROFE_BASE.peloEstilo,
+    colorPelo: PROFE_BASE.colorPelo,
+    polera: PROFE_BASE.polera,
+    pos: POSICIONES.profe,
+    esAdulto: true,
+  },
+];
 
 type Dialogo =
-  | { tipo: "npc"; npc: NpcDef; emocion: EmotionId }
+  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
   | { tipo: "profe-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise };
 
 type Crisis = "no" | "respirando" | "mensaje";
 
-export default function SchoolGame() {
+export default function SchoolGame3D() {
   const [avatar] = useState(() => storage.getAvatar());
   const [clinico] = useState(() => storage.getClinical());
 
@@ -77,29 +90,23 @@ export default function SchoolGame() {
   const [burbujas, setBurbujas] = useState<Record<string, EmotionId | undefined>>(
     BURBUJAS_INICIALES
   );
-  const [posJugador, setPosJugador] = useState({ x: 50, y: 95 });
+  const [objetivo, setObjetivo] = useState<[number, number]>([0, 4]);
   const [dialogo, setDialogo] = useState<Dialogo | null>(null);
   const [crisis, setCrisis] = useState<Crisis>("no");
   const [faseRespiracion, setFaseRespiracion] = useState<"inhala" | "exhala">("inhala");
   const [nubes, setNubes] = useState(false);
   const [ruido, setRuido] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [puntoViaje, setPuntoViaje] = useState<{
-    color: string;
-    x: number;
-    y: number;
-    key: number;
-  } | null>(null);
+  const [orbe, setOrbe] = useState<(Orbe & { emocion: EmotionId; nombre: string }) | null>(null);
   const [animEjercicio, setAnimEjercicio] = useState<Exercise | null>(null);
 
   const ultimaInteraccion = useRef(Date.now());
-  const ocupadoRef = useRef(false); // diálogo, nubes o crisis activos
+  const ocupadoRef = useRef(false);
 
   const total = totalCharge(carga);
-  const mood: AvatarMood = total >= 75 ? "abrumado" : total >= 40 ? "cargado" : "ok";
+  const abrumado = total >= 75;
   ocupadoRef.current = dialogo !== null || nubes || crisis !== "no" || animEjercicio !== null;
 
-  // Registrar sesión al entrar
   useEffect(() => {
     const p = storage.getProgress();
     storage.setProgress({ ...p, sesiones: p.sesiones + 1 });
@@ -115,7 +122,7 @@ export default function SchoolGame() {
     }
   }, [total, crisis]);
 
-  // Ciclo de respiración guiada durante la crisis
+  // Respiración guiada de la crisis
   useEffect(() => {
     if (crisis !== "respirando") return;
     setFaseRespiracion("inhala");
@@ -134,7 +141,7 @@ export default function SchoolGame() {
     return () => clearInterval(t);
   }, [crisis]);
 
-  // Migración de burbujas si el niño no interactúa (3.2) y ruido fuerte periódico (4.1)
+  // Migración de burbujas por inactividad (3.2) y ruido fuerte periódico (4.1)
   useEffect(() => {
     const intervaloMs = clinico.intervaloEventosSeg * 1000;
 
@@ -144,7 +151,7 @@ export default function SchoolGame() {
         ultimaInteraccion.current = Date.now();
         setBurbujas((prev) => {
           const emociones = Object.values(prev).filter(Boolean) as EmotionId[];
-          const ids = COMPANEROS.map((c) => c.id).sort(() => Math.random() - 0.5);
+          const ids = COMPANEROS_BASE.map((c) => c.id).sort(() => Math.random() - 0.5);
           const nuevas: Record<string, EmotionId | undefined> = {};
           emociones.forEach((e, i) => {
             nuevas[ids[i]] = e;
@@ -175,65 +182,57 @@ export default function SchoolGame() {
 
   // ---------- interacciones ----------
 
-  function moverJugador(e: React.MouseEvent<HTMLDivElement>) {
+  function tocarSuelo(x: number, z: number) {
     if (ocupadoRef.current) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    // solo dentro del piso de la sala
-    setPosJugador({ x: Math.max(4, Math.min(96, x)), y: Math.max(58, Math.min(96, y)) });
+    setObjetivo([x, z]);
     marcarInteraccion();
   }
 
-  function tocarNpc(npc: NpcDef) {
+  function tocarNpc(id: string) {
     if (ocupadoRef.current) return;
     marcarInteraccion();
-    setPosJugador({ x: Math.max(4, Math.min(96, npc.x + 7)), y: Math.min(96, npc.y + 3) });
-    const emocion = burbujas[npc.id];
+    const pos = POSICIONES[id];
+    setObjetivo([pos[0] + 0.9, Math.min(pos[1] + 0.7, 4.4)]);
+    const emocion = burbujas[id];
+    const npc = NPCS_3D.find((n) => n.id === id)!;
     setTimeout(() => {
-      if (npc.id === "profe") {
+      if (id === "profe") {
         setDialogo({ tipo: "profe-apertura" });
       } else if (emocion) {
-        setDialogo({ tipo: "npc", npc, emocion });
+        setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
       } else {
         setAviso(`${npc.nombre} dice: «¡Hola! ¿Jugamos al recreo?»`);
         setTimeout(() => setAviso(null), 2500);
       }
-    }, 500);
+    }, 700);
   }
 
-  function escucharNpc(npc: NpcDef, emocion: EmotionId) {
+  function escucharNpc(npcId: string, nombre: string, emocion: EmotionId) {
     setDialogo(null);
-    setBurbujas((b) => ({ ...b, [npc.id]: undefined }));
-    // reaparece otra burbuja más tarde, manteniendo la mezcla de la salvaguarda 5.2
+    setBurbujas((b) => ({ ...b, [npcId]: undefined }));
+    // reaparece otra burbuja más tarde, manteniendo la mezcla (5.2)
     setTimeout(() => {
       setBurbujas((prev) => {
-        const libres = COMPANEROS.filter((c) => !prev[c.id]);
+        const libres = COMPANEROS_BASE.filter((c) => !prev[c.id]);
         if (libres.length === 0) return prev;
         const elegido = libres[Math.floor(Math.random() * libres.length)];
         const pool: EmotionId[] =
           Math.random() < 0.55 ? DISPLACENTERAS : (["alegria", "calma"] as EmotionId[]);
-        const nueva = pool[Math.floor(Math.random() * pool.length)];
-        return { ...prev, [elegido.id]: nueva };
+        return { ...prev, [elegido.id]: pool[Math.floor(Math.random() * pool.length)] };
       });
     }, RESPAWN_BURBUJA_MS);
 
     const info = EMOTIONS[emocion];
     if (info.displacentera) {
-      // el color viaja a la guatita (3.3)
-      const key = Date.now();
-      setPuntoViaje({ color: info.color, x: npc.x, y: npc.y - 14, key });
-      setTimeout(() => {
-        setPuntoViaje((p) => (p && p.key === key ? { ...p, x: posJugador.x, y: posJugador.y - 6 } : p));
-      }, 60);
-      setTimeout(() => {
-        setPuntoViaje(null);
-        setCarga((c) => sumarCarga(c, emocion, CARGA_POR_BURBUJA));
-        setAviso(
-          `El ${info.nombre} de ${npc.nombre} se quedó en tu guatita. ¿Lo sientes ahí?`
-        );
-        setTimeout(() => setAviso(null), 3500);
-      }, 1250);
+      // el color viaja en 3D hasta la guatita (3.3)
+      const pos = POSICIONES[npcId];
+      setOrbe({
+        key: Date.now(),
+        color: info.color,
+        desde: [pos[0], 1.8, pos[1]],
+        emocion,
+        nombre,
+      });
     } else if (emocion === "calma") {
       setCarga((c) => reducirTotal(c, ALIVIO_AMIGO_CALMA));
       setAviso("Estar con un amigo tranquilo ayudó un poquito a tu cuerpo. 💚");
@@ -244,7 +243,16 @@ export default function SchoolGame() {
     }
   }
 
-  // Conversación con la figura de apoyo: baja fuerte pero NO a cero (salvaguarda 5.3)
+  function llegoOrbe() {
+    if (!orbe) return;
+    const info = EMOTIONS[orbe.emocion];
+    setCarga((c) => sumarCarga(c, orbe.emocion, CARGA_POR_BURBUJA));
+    setAviso(`El ${info.nombre} de ${orbe.nombre} se quedó en tu guatita. ¿Lo sientes ahí?`);
+    setTimeout(() => setAviso(null), 3500);
+    setOrbe(null);
+  }
+
+  // Figura de apoyo: baja fuerte pero NO a cero (salvaguarda 5.3)
   function contarALaProfe(emocion: EmotionId) {
     setDialogo(null);
     setNubes(true);
@@ -267,8 +275,7 @@ export default function SchoolGame() {
     setTimeout(() => {
       setAnimEjercicio(null);
       setCarga((c) => reducirTotal(c, ALIVIO_EJERCICIO));
-      // puente juego → vida real (3.5), presente desde el MVP
-      setDialogo({ tipo: "puente", ejercicio: ej });
+      setDialogo({ tipo: "puente", ejercicio: ej }); // puente juego → vida real (3.5)
     }, 1800);
   }
 
@@ -296,24 +303,30 @@ export default function SchoolGame() {
     marcarInteraccion();
   }
 
-  // emociones acumuladas, para las respuestas coloreadas dinámicas de la profe (3.4)
   const emocionesAcumuladas = DISPLACENTERAS.filter((id) => (carga[id] ?? 0) >= 4);
 
   // ---------- render ----------
 
   return (
-    <div className="escena-envoltorio" onClick={moverJugador}>
-      {/* decoración de la sala */}
-      <div className="escena-pizarra">Sala de clases 🏫</div>
-      <div className="escena-ventana" style={{ right: "8%", top: "7%" }} />
-      <div className="escena-ventana" style={{ right: "28%", top: "7%" }} />
+    <div className="escena-envoltorio">
+      <SchoolScene
+        avatar={avatar}
+        charge={carga}
+        abrumado={abrumado}
+        npcs={NPCS_3D}
+        burbujas={burbujas}
+        objetivo={objetivo}
+        orbe={orbe}
+        onSuelo={tocarSuelo}
+        onNpc={tocarNpc}
+        onOrbeLlega={llegoOrbe}
+      />
 
-      <Link href="/" className="salir-enlace" onClick={(e) => e.stopPropagation()}>
+      <Link href="/" className="salir-enlace">
         ← Salir
       </Link>
 
-      {/* HUD */}
-      <div className="hud" onClick={(e) => e.stopPropagation()}>
+      <div className="hud">
         <button
           className="hud-boton"
           onClick={() => {
@@ -327,74 +340,19 @@ export default function SchoolGame() {
         </button>
       </div>
 
-      {/* aviso de carga alta: anticipar la crisis (3.6) */}
-      {total >= 75 && crisis === "no" && !aviso && (
+      {abrumado && crisis === "no" && !aviso && (
         <div className="aviso-carga">
           Tu guatita está muy llena… ¿probamos una herramienta o le contamos a la profe?
         </div>
       )}
-      {aviso && <div className="aviso-carga" style={{ borderColor: "var(--acento)", color: "var(--tinta)" }}>{aviso}</div>}
-
-      {/* profesora */}
-      <button
-        className="npc"
-        style={{ left: `${PROFE.x}%`, top: `${PROFE.y}%` }}
-        onClick={(e) => {
-          e.stopPropagation();
-          tocarNpc(PROFE);
-        }}
-      >
-        <NpcSvg piel={PROFE.piel} pelo={PROFE.colorPelo} polera={PROFE.polera} esAdulto />
-        <span className="npc-nombre">{PROFE.nombre}</span>
-      </button>
-
-      {/* compañeros con burbujas emocionales */}
-      {COMPANEROS.map((npc) => {
-        const emocion = burbujas[npc.id];
-        return (
-          <button
-            key={npc.id}
-            className="npc"
-            style={{ left: `${npc.x}%`, top: `${npc.y}%` }}
-            onClick={(e) => {
-              e.stopPropagation();
-              tocarNpc(npc);
-            }}
-          >
-            {emocion && (
-              <span
-                className="burbuja"
-                style={{ background: EMOTIONS[emocion].color }}
-                aria-label={`burbuja de ${EMOTIONS[emocion].nombre}`}
-              />
-            )}
-            <NpcSvg piel={npc.piel} pelo={npc.colorPelo} polera={npc.polera} />
-            <span className="npc-nombre">{npc.nombre}</span>
-          </button>
-        );
-      })}
-
-      {/* el avatar del niño */}
-      <div className="jugador" style={{ left: `${posJugador.x}%`, top: `${posJugador.y}%` }}>
-        <AvatarSvg config={avatar} charge={carga} mood={mood} size={86} />
-      </div>
-
-      {/* punto de color que viaja a la guatita */}
-      {puntoViaje && (
-        <div
-          className="punto-viaje"
-          style={{
-            left: `${puntoViaje.x}%`,
-            top: `${puntoViaje.y}%`,
-            background: puntoViaje.color,
-          }}
-        />
+      {aviso && (
+        <div className="aviso-carga" style={{ borderColor: "var(--acento)", color: "var(--tinta)" }}>
+          {aviso}
+        </div>
       )}
 
-      {/* ruido fuerte */}
       {ruido && <div className="ruido-fuerte">💥 ¡RUIDO FUERTE!</div>}
 
-      {/* animación breve de ejercicio */}
       {animEjercicio && (
         <div className="velo" style={{ alignItems: "center" }}>
           <div className="dialogo" style={{ textAlign: "center" }}>
@@ -406,27 +364,26 @@ export default function SchoolGame() {
         </div>
       )}
 
-      {/* diálogos */}
       {dialogo?.tipo === "npc" && (
-        <div className="velo" onClick={(e) => e.stopPropagation()}>
+        <div className="velo">
           <div className="dialogo">
-            <span className="dialogo-hablante">{dialogo.npc.nombre}</span>
+            <span className="dialogo-hablante">{dialogo.nombre}</span>
             <p className="dialogo-texto">«{LINEAS_NPC[dialogo.emocion]}»</p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}
-              onClick={() => escucharNpc(dialogo.npc, dialogo.emocion)}
+              onClick={() => escucharNpc(dialogo.npcId, dialogo.nombre, dialogo.emocion)}
             >
-              Escuchar a {dialogo.npc.nombre}
+              Escuchar a {dialogo.nombre}
             </button>
           </div>
         </div>
       )}
 
       {dialogo?.tipo === "profe-apertura" && (
-        <div className="velo" onClick={(e) => e.stopPropagation()}>
+        <div className="velo">
           <div className="dialogo">
-            <span className="dialogo-hablante">{PROFE.nombre}</span>
+            <span className="dialogo-hablante">{PROFE_BASE.nombre}</span>
             <p className="dialogo-texto">«¿En qué te puedo ayudar hoy?»</p>
             {emocionesAcumuladas.length === 0 ? (
               <>
@@ -457,7 +414,7 @@ export default function SchoolGame() {
       )}
 
       {dialogo?.tipo === "herramientas" && (
-        <div className="velo" onClick={(e) => e.stopPropagation()}>
+        <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">Mis herramientas de calma</span>
             {ejerciciosActivos.length === 0 && (
@@ -483,7 +440,7 @@ export default function SchoolGame() {
       )}
 
       {dialogo?.tipo === "puente" && (
-        <div className="velo" onClick={(e) => e.stopPropagation()}>
+        <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">El puente a la vida real</span>
             <p className="dialogo-texto">
@@ -508,7 +465,6 @@ export default function SchoolGame() {
         </div>
       )}
 
-      {/* transición de nubes al conversar con la profe */}
       {nubes && (
         <div className="nubes">
           <div className="nube" style={{ width: 180, height: 70, left: "12%", top: "22%" }} />
@@ -520,7 +476,6 @@ export default function SchoolGame() {
         </div>
       )}
 
-      {/* crisis: pausa guiada de calma (3.6, decisión #9) */}
       {crisis !== "no" && (
         <div className="nubes" style={{ flexDirection: "column", gap: 24, padding: 24 }}>
           {crisis === "respirando" ? (
@@ -534,11 +489,9 @@ export default function SchoolGame() {
               <p style={{ fontSize: "1.6rem", fontWeight: 800, color: "#357fb0", margin: 0 }}>
                 {faseRespiracion === "inhala" ? "Inhala… 🌬️" : "Exhala… 😌"}
               </p>
-              <AvatarSvg config={avatar} mood="calma" size={90} />
             </>
           ) : (
             <>
-              <AvatarSvg config={avatar} mood="calma" size={110} />
               <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "#4a6e8a", textAlign: "center", maxWidth: 420, margin: 0 }}>
                 A veces la carga se llena y el cuerpo necesita parar. No es tu culpa y no estás solo.
                 La próxima vez puedes usar tus herramientas un poquito antes, o contarle a la profe
