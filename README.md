@@ -56,8 +56,32 @@ ambiental y el entorno 3D (definidos en `lib/contexts.ts`).
 - **5.1 Asentimiento**: bloque previo a cada entrada al contexto.
 - **5.2 Mezcla social**: hay NPC neutros y reguladores (un amigo que calma); no toda interacción
   social sube la carga.
-- **5.4 Set configurable**: el repertorio activo de ejercicios se define en `/clinico`, con
-  etiquetas de intensidad (intenso = perfil buscador, suave = perfil hipersensible).
+- **5.4 Set configurable**: el repertorio activo de ejercicios se define en `/clinico` o por caso
+  en `/pro`, desde la **biblioteca clínica de ejercicios** (documento "Biblioteca de ejercicios de
+  regulación v1").
+
+### Biblioteca de ejercicios (`lib/exercises.ts`)
+
+23 técnicas organizadas **por mecanismo, no por diagnóstico** (decisión estructural del documento
+clínico), en cinco familias:
+
+- **A · Propioceptivos / trabajo pesado** — empujar la pared, apretar manos, abrazo de oso, llevar
+  algo pesado, empujar o tirar, tensar y soltar. Base segura transversal.
+- **B · Vestibulares / movimiento** — saltar, correr en el sitio (alertantes, *precaución*),
+  balanceo lento, marcha rítmica (calmantes).
+- **C · Respiratorios e interoceptivos** — respiración del globo, cuadrada, soplar la vela,
+  «¿dónde lo siento?».
+- **D · Cognitivo-psicológicos** — ponerle nombre, contar lo que pasa, frase de calma, pedir una
+  pausa, «¿qué viene ahora?».
+- **E · Reductores de input sensorial** — audífonos, rincón tranquilo, objeto de regulación, bajar
+  la luz.
+
+Cada ejercicio lleva su **familia**, el **estado que regula** (↓ hiperactivación / ↑ hipoactivación),
+su **seguridad** (transversal / precaución) y los **contextos** donde aplica. El juego solo ofrece
+las herramientas del set que correspondan al contexto actual (mapa de la sección 7 del documento);
+los ejercicios alertantes dan menos alivio y avisan si la carga ya está alta (regla de seguridad B).
+El configurador de `/pro` sugiere el set siguiendo el árbol de decisión por perfil sensorial
+(sección 8). Cada técnica tiene su animación 3D del personaje (incluidas abrazo, balanceo y marcha).
 
 ## Frontera de datos (sección 2 y 7)
 

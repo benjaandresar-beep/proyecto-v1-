@@ -65,6 +65,7 @@ export default function CharacterMesh({
     // objetivos de pose según el estado actual
     let alto = Math.sin(t * 2) * 0.02; // respiración sutil en reposo
     let inclinacion = 0;
+    let balanceoZ = abrumado ? Math.sin(t * 18) * 0.05 : 0;
     let piernaIx = 0;
     let piernaDx = 0;
     let brazoIx = 0;
@@ -90,6 +91,26 @@ export default function CharacterMesh({
       brazoIx = -1.35 + Math.sin(t * 6) * 0.08;
       brazoDx = -1.35 + Math.sin(t * 6) * 0.08;
       inclinacion = 0.28;
+    } else if (ejercicio === "abrazo") {
+      // abrazo de oso: brazos cruzados al pecho, con un pulso de apretón
+      const s = (Math.sin(t * 1.8) + 1) / 2;
+      brazoIx = -1.25;
+      brazoDx = -1.25;
+      brazoIz = -0.55 - s * 0.25; // cruzan hacia el lado contrario
+      brazoDz = 0.55 + s * 0.25;
+      inclinacion = 0.08 + s * 0.05;
+    } else if (ejercicio === "balanceo") {
+      // mecerse lento de un lado a otro
+      balanceoZ = Math.sin(t * 2.1) * 0.18;
+      alto = Math.abs(Math.sin(t * 2.1)) * 0.02;
+    } else if (ejercicio === "marcha") {
+      // marcha rítmica lenta: rodillas arriba, braceo parejo
+      const f = Math.sin(t * 6);
+      piernaIx = Math.max(f, 0) * 0.7;
+      piernaDx = Math.max(-f, 0) * 0.7;
+      brazoIx = -f * 0.45;
+      brazoDx = f * 0.45;
+      alto = Math.abs(Math.sin(t * 6)) * 0.05;
     } else if (ejercicio === "calma") {
       // respiración amplia y lenta: los brazos suben y bajan con el aire
       const s = (Math.sin(t * 1.7) + 1) / 2;
@@ -119,7 +140,7 @@ export default function CharacterMesh({
     bD.rotation.z = THREE.MathUtils.damp(bD.rotation.z, brazoDz, k, delta);
     g.position.y = THREE.MathUtils.damp(g.position.y, alto, k, delta);
     g.rotation.x = THREE.MathUtils.damp(g.rotation.x, inclinacion, 10, delta);
-    g.rotation.z = abrumado ? Math.sin(t * 18) * 0.05 : 0;
+    g.rotation.z = THREE.MathUtils.damp(g.rotation.z, balanceoZ, 8, delta);
   });
 
   // segmentos de carga apilados de abajo hacia arriba en la guatita

@@ -6,8 +6,16 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { EXERCISE_LIBRARY } from "@/lib/exercises";
+import { EXERCISE_LIBRARY, FAMILIAS, Familia } from "@/lib/exercises";
 import { ClinicalConfig, DEFAULT_CLINICAL, storage } from "@/lib/storage";
+
+const ORDEN_FAMILIAS: Familia[] = [
+  "propioceptivo",
+  "vestibular",
+  "respiratorio",
+  "cognitivo",
+  "sensorial",
+];
 
 export default function ModoClinico() {
   const [config, setConfig] = useState<ClinicalConfig>(DEFAULT_CLINICAL);
@@ -41,51 +49,49 @@ export default function ModoClinico() {
       </p>
 
       <div className="tarjeta">
-        <strong>Set de reguladores para este caso</strong>
+        <strong>Biblioteca de reguladores</strong>
         <p style={{ color: "var(--tinta-suave)", fontSize: "0.92rem", margin: "6px 0 12px" }}>
-          Los ejercicios no sirven igual a todos los perfiles: el input <em>intenso</em> regula a un
-          perfil buscador (frecuente en TDAH) pero puede sobrecargar a uno hipersensible (frecuente
-          en parte del TEA). Seleccione según el perfil sensorial del niño.
+          Organizada por mecanismo, no por diagnóstico. El input <em>intenso</em> regula a un perfil
+          buscador pero puede sobrecargar a uno hipersensible. Las técnicas marcadas{" "}
+          <span className="chip-seg precaucion">precaución</span> no se ofrecen como calmante a un
+          niño hiperactivado ni hipersensible. Seleccione según el perfil sensorial del niño.
         </p>
-        {EXERCISE_LIBRARY.map((ej) => {
-          const activo = config.ejercicios.includes(ej.id);
+        {ORDEN_FAMILIAS.map((fam) => {
+          const ejercicios = EXERCISE_LIBRARY.filter((e) => e.familia === fam);
+          const info = FAMILIAS[fam];
           return (
-            <label
-              key={ej.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 4px",
-                borderBottom: "1px solid var(--borde)",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={activo}
-                onChange={() => alternarEjercicio(ej.id)}
-                style={{ width: 22, height: 22 }}
-              />
-              <span style={{ fontSize: "1.3rem" }}>{ej.emoji}</span>
-              <span style={{ flex: 1 }}>
-                <strong>{ej.nombre}</strong>
-                <br />
-                <small style={{ color: "var(--tinta-suave)" }}>{ej.instruccion}</small>
-              </span>
-              <span
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  padding: "3px 8px",
-                  borderRadius: 8,
-                  background: ej.intensidad === "intenso" ? "#fbe3df" : "#def0e6",
-                  color: ej.intensidad === "intenso" ? "#a33a2d" : "#2d7a4f",
-                }}
-              >
-                {ej.intensidad}
-              </span>
-            </label>
+            <div key={fam} style={{ marginTop: 14 }}>
+              <div style={{ fontWeight: 800, fontSize: "0.95rem" }}>
+                Familia {info.letra} · {info.nombre}
+              </div>
+              <p style={{ color: "var(--tinta-suave)", fontSize: "0.82rem", margin: "2px 0 6px" }}>
+                {info.descripcion}
+              </p>
+              {ejercicios.map((ej) => {
+                const activo = config.ejercicios.includes(ej.id);
+                return (
+                  <label key={ej.id} className="fila-check">
+                    <input
+                      type="checkbox"
+                      checked={activo}
+                      onChange={() => alternarEjercicio(ej.id)}
+                    />
+                    <span style={{ fontSize: "1.2rem" }}>{ej.emoji}</span>
+                    <span style={{ flex: 1 }}>
+                      <strong>{ej.nombre}</strong>{" "}
+                      <span style={{ color: "var(--tinta-suave)" }}>
+                        {ej.estado === "subir" ? "↑ activa" : ej.estado === "bajar" ? "↓ calma" : "• localiza"}
+                      </span>
+                      <br />
+                      <small style={{ color: "var(--tinta-suave)" }}>{ej.instruccion}</small>
+                    </span>
+                    <span className={`chip-seg ${ej.seguridad}`}>
+                      {ej.seguridad === "precaucion" ? "precaución" : "seguro"}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
           );
         })}
         {config.ejercicios.length === 0 && (

@@ -48,10 +48,13 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
   const [avatar] = useState(() => storage.getAvatar());
   const [clinico] = useState(() => storage.getClinical());
 
-  const ejerciciosActivos = useMemo(
-    () => EXERCISE_LIBRARY.filter((e) => clinico.ejercicios.includes(e.id)),
-    [clinico]
-  );
+  // Herramientas del set configurado disponibles en ESTE contexto (mapa sección 7).
+  // Si ninguna del set aplica al contexto, se muestran todas las del set (no dejar al niño sin opciones).
+  const ejerciciosActivos = useMemo(() => {
+    const delSet = EXERCISE_LIBRARY.filter((e) => clinico.ejercicios.includes(e.id));
+    const enContexto = delSet.filter((e) => e.contextos.includes(contexto.id));
+    return enContexto.length > 0 ? enContexto : delSet;
+  }, [clinico, contexto]);
 
   // compresión horizontal según proporción de la pantalla (1 = escritorio)
   const [escalaX, setEscalaX] = useState(1);
@@ -325,7 +328,20 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
     // el personaje ejecuta la animación del ejercicio en la escena 3D
     setTimeout(() => {
       setAnimEjercicio(null);
-      setCarga((c) => reducirTotal(c, ALIVIO_EJERCICIO));
+      // El juego modela hiperactivación: los ejercicios calmantes regulan de
+      // lleno; los alertantes (vestibular intenso) descargan menos y, si la
+      // carga ya está alta, lo enseñan (documento clínico, regla de seguridad B).
+      if (ej.estado === "subir") {
+        setCarga((c) => reducirTotal(c, ALIVIO_EJERCICIO * 0.4));
+        if (totalCharge(carga) >= 60) {
+          setAviso(
+            "Eso te dio energía, pero tu cuerpo ya estaba muy cargado. Para calmar, prueba respirar o empujar la pared."
+          );
+          setTimeout(() => setAviso(null), 4000);
+        }
+      } else {
+        setCarga((c) => reducirTotal(c, ALIVIO_EJERCICIO));
+      }
       setDialogo({ tipo: "puente", ejercicio: ej }); // puente juego → vida real (3.5)
     }, 3200);
   }

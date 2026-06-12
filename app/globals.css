@@ -628,3 +628,14 @@ a {
   }
   .no-print { display: none !important; }
 }
+
+.chip-seg {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.chip-seg.transversal { background: #def0e6; color: #2d7a4f; }
+.chip-seg.precaucion { background: #fbe3df; color: #a33a2d; }

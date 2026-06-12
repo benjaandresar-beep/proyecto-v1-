@@ -16,8 +16,16 @@ import {
   proStorage,
 } from "@/lib/pro";
 import { generarBloques, RASGOS } from "@/lib/guide";
-import { EXERCISE_LIBRARY } from "@/lib/exercises";
+import { EXERCISE_LIBRARY, FAMILIAS, Familia } from "@/lib/exercises";
 import { storage } from "@/lib/storage";
+
+const ORDEN_FAMILIAS: Familia[] = [
+  "propioceptivo",
+  "vestibular",
+  "respiratorio",
+  "cognitivo",
+  "sensorial",
+];
 
 const DIAGNOSTICOS = ["TEA", "TDAH", "AuDHD"];
 const PROFESIONES = [
@@ -235,41 +243,72 @@ export default function LadoProfesional() {
         <div className="tarjeta">
           <strong>Juego: set de reguladores del caso</strong>
           <p className="ayuda">
-            Los ejercicios no sirven igual a todos los perfiles: el input intenso regula a un perfil
-            buscador pero puede sobrecargar a uno hipersensible.
+            Biblioteca por mecanismo (familias A–E), no por diagnóstico. El input intenso regula a un
+            perfil buscador pero puede sobrecargar a uno hipersensible. La sugerencia sigue el árbol
+            de decisión: base segura (A + C) para todos, vestibular intenso (B) solo para buscadores.
           </p>
           <button
             className="boton secundario"
             onClick={() => {
-              const sugerido = EXERCISE_LIBRARY.filter((e) =>
-                caso.perfilSensorial === "buscador"
-                  ? e.intensidad === "intenso" || e.id === "respirar"
-                  : caso.perfilSensorial === "evitador"
-                    ? e.intensidad === "suave"
-                    : true
-              ).map((e) => e.id);
+              // Árbol de decisión (sección 8): base segura A+C siempre; B intenso solo en buscador;
+              // E (reductores) prioritario en evitador.
+              const sugerido = EXERCISE_LIBRARY.filter((e) => {
+                const baseSegura =
+                  (e.familia === "propioceptivo" || e.familia === "respiratorio") &&
+                  e.seguridad === "transversal";
+                const cognitivosUtiles = e.familia === "cognitivo";
+                if (caso.perfilSensorial === "buscador") {
+                  // puede descargar con vestibular intenso
+                  return baseSegura || cognitivosUtiles || e.familia === "vestibular";
+                }
+                if (caso.perfilSensorial === "evitador") {
+                  // sin vestibular intenso; suma reductores sensoriales
+                  return (
+                    baseSegura ||
+                    cognitivosUtiles ||
+                    e.familia === "sensorial" ||
+                    (e.familia === "vestibular" && e.seguridad === "transversal")
+                  );
+                }
+                // mixto: todo lo seguro transversal + cognitivos + reductores
+                return e.seguridad === "transversal" || cognitivosUtiles;
+              }).map((e) => e.id);
               actualizarCaso(caso.id, { ejercicios: sugerido });
             }}
           >
-            ✨ Sugerir set según perfil sensorial
+            ✨ Sugerir set según perfil sensorial ({caso.perfilSensorial})
           </button>
-          {EXERCISE_LIBRARY.map((ej) => (
-            <label key={ej.id} className="fila-check">
-              <input
-                type="checkbox"
-                checked={caso.ejercicios.includes(ej.id)}
-                onChange={() =>
-                  actualizarCaso(caso.id, {
-                    ejercicios: caso.ejercicios.includes(ej.id)
-                      ? caso.ejercicios.filter((x) => x !== ej.id)
-                      : [...caso.ejercicios, ej.id],
-                  })
-                }
-              />
-              {ej.emoji} {ej.nombre}
-              <span className={`chip-intensidad ${ej.intensidad}`}>{ej.intensidad}</span>
-            </label>
-          ))}
+          {ORDEN_FAMILIAS.map((fam) => {
+            const ejercicios = EXERCISE_LIBRARY.filter((e) => e.familia === fam);
+            const info = FAMILIAS[fam];
+            return (
+              <div key={fam} style={{ marginTop: 12 }}>
+                <div style={{ fontWeight: 800, fontSize: "0.9rem" }}>
+                  Familia {info.letra} · {info.nombre}
+                </div>
+                {ejercicios.map((ej) => (
+                  <label key={ej.id} className="fila-check">
+                    <input
+                      type="checkbox"
+                      checked={caso.ejercicios.includes(ej.id)}
+                      onChange={() =>
+                        actualizarCaso(caso.id, {
+                          ejercicios: caso.ejercicios.includes(ej.id)
+                            ? caso.ejercicios.filter((x) => x !== ej.id)
+                            : [...caso.ejercicios, ej.id],
+                        })
+                      }
+                    />
+                    <span style={{ fontSize: "1.1rem" }}>{ej.emoji}</span>
+                    <span style={{ flex: 1 }}>{ej.nombre}</span>
+                    <span className={`chip-seg ${ej.seguridad}`}>
+                      {ej.seguridad === "precaucion" ? "precaución" : "seguro"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            );
+          })}
 
           <span className="campo-titulo">Clave de acceso al juego</span>
           <p className="ayuda">
