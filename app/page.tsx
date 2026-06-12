@@ -37,12 +37,12 @@ export default function Inicio() {
       </Link>
 
       <div className="fila-botones">
-        <button className="boton secundario" disabled>
-          🏠 Casa (próximamente)
-        </button>
-        <button className="boton secundario" disabled>
-          🚦 Calle (próximamente)
-        </button>
+        <Link href="/casa" className="boton" style={{ background: "#c97b63" }}>
+          🏠 Casa
+        </Link>
+        <Link href="/calle" className="boton" style={{ background: "#5f7d95" }}>
+          🚦 Calle
+        </Link>
       </div>
 
       {totalReales > 0 && (

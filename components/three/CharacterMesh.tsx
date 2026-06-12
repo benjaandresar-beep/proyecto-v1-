@@ -26,6 +26,8 @@ interface Props {
   caminando?: boolean;
   /** animación del ejercicio en práctica; tiene prioridad sobre la caminata */
   ejercicio?: ExerciseAnimation | null;
+  /** audífonos puestos (herramienta de la Calle que reduce el estímulo, 4.3) */
+  audifonos?: boolean;
 }
 
 const BELLY_HEIGHT = 0.5; // alto interno disponible para los segmentos de carga
@@ -42,6 +44,7 @@ export default function CharacterMesh({
   esAdulto = false,
   caminando = false,
   ejercicio = null,
+  audifonos = false,
 }: Props) {
   const grupo = useRef<THREE.Group>(null);
   const piernaI = useRef<THREE.Group>(null);
@@ -211,6 +214,24 @@ export default function CharacterMesh({
         <sphereGeometry args={[0.035, 6, 6]} />
         <meshStandardMaterial color="#2c2c2c" />
       </mesh>
+
+      {/* audífonos: cintillo y orejeras */}
+      {audifonos && (
+        <group position={[0, 1.62, 0]}>
+          <mesh position={[0, 0.12, 0]}>
+            <torusGeometry args={[0.34, 0.045, 8, 18, Math.PI]} />
+            <meshStandardMaterial color="#3c3c3c" flatShading />
+          </mesh>
+          <mesh position={[-0.33, 0, 0.02]}>
+            <sphereGeometry args={[0.1, 8, 8]} />
+            <meshStandardMaterial color="#3c3c3c" flatShading />
+          </mesh>
+          <mesh position={[0.33, 0, 0.02]}>
+            <sphereGeometry args={[0.1, 8, 8]} />
+            <meshStandardMaterial color="#3c3c3c" flatShading />
+          </mesh>
+        </group>
+      )}
 
       {/* pelo según estilo */}
       {pelo === "corto" && (

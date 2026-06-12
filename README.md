@@ -21,11 +21,17 @@ npm run build    # build de producción
 
 | Ruta | Qué es |
 | --- | --- |
-| `/` | Inicio: avatar 3D, entrada a Escuela (Casa y Calle bloqueados, Fase 2) y logros del puente a la vida real |
+| `/` | Inicio: avatar 3D, entrada a los tres contextos y logros del puente a la vida real |
 | `/avatar` | Editor del personaje (piel, pelo, polera) con vista previa 3D |
-| `/escuela` | Bloque de asentimiento (5.1) y luego el juego en 3D |
+| `/escuela` | Contexto Escuela (4.1): compañeros, profe, ruido fuerte periódico |
+| `/casa` | Contexto Casa (4.2): hermanos y familia, cuidadora, ruido doméstico |
+| `/calle` | Contexto Calle (4.3): transeúntes que cambian de lugar, autos cruzando, bocinazos más frecuentes, papá que acompaña y audífonos que reducen el estímulo |
 | `/escuela-2d` | La misma mecánica en la escena 2D original, conservada para comparar en validaciones |
 | `/clinico` | Modo clínico: set de reguladores por caso (5.4) y ritmo de eventos |
+
+Cada contexto entra siempre por su bloque de asentimiento (5.1) y comparte la mecánica central y
+las salvaguardas; cambian los NPC, la figura de apoyo, las líneas de diálogo, el estímulo
+ambiental y el entorno 3D (definidos en `lib/contexts.ts`).
 
 ## Mecánica implementada (referencias a la spec)
 

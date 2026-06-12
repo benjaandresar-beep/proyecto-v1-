@@ -1,12 +1,14 @@
 "use client";
 
-// Contexto Escuela en 3D. Misma mecánica y salvaguardas que la versión 2D
-// (secciones 3 y 4.1 de la spec); cambia solo la representación de la escena.
+// Motor del juego para cualquier contexto (Escuela / Casa / Calle, sección 4).
+// Misma mecánica central y salvaguardas (secciones 3 y 5) en los tres:
+// cambian los NPC, la figura de apoyo, los estímulos y el entorno 3D.
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Npc3D, Orbe } from "@/components/three/SchoolScene";
+import type { Npc3D, Orbe } from "@/components/three/ContextScene";
+import { ContextDef } from "@/lib/contexts";
 import {
   ChargeMap,
   CHARGE_MAX,
@@ -19,69 +21,30 @@ import { Exercise, EXERCISE_LIBRARY } from "@/lib/exercises";
 import {
   ALIVIO_AMIGO_CALMA,
   ALIVIO_EJERCICIO,
-  BURBUJAS_INICIALES,
   CARGA_POR_BURBUJA,
   CARGA_RUIDO,
-  COMPANEROS_BASE,
   escalarA,
-  LINEAS_NPC,
-  PROFE_BASE,
   reducirTotal,
   RESPAWN_BURBUJA_MS,
   sumarCarga,
 } from "@/lib/school";
 import { storage } from "@/lib/storage";
 
-const SchoolScene = dynamic(() => import("@/components/three/SchoolScene"), { ssr: false });
-
-// posiciones [x, z] en el piso de la sala 3D
-const POSICIONES: Record<string, [number, number]> = {
-  martin: [-5, 1],
-  sofia: [-2.5, 3.2],
-  tomas: [0.8, 0.8],
-  emilia: [3, 3.4],
-  lucas: [5.2, 0.2],
-  maite: [1.8, -2.2],
-  diego: [-4.6, 3.8],
-  anto: [5.6, 3.6],
-  profe: [-2.2, -3.6],
-};
-
-// En pantallas angostas (celular/tablet vertical) la sala se comprime en X
-// para que todos los personajes queden visibles sin alejar demasiado la cámara.
-function construirNpcs(escalaX: number): Npc3D[] {
-  return [
-    ...COMPANEROS_BASE.map((c) => ({
-      id: c.id,
-      nombre: c.nombre,
-      piel: c.piel,
-      pelo: c.peloEstilo,
-      colorPelo: c.colorPelo,
-      polera: c.polera,
-      pos: [POSICIONES[c.id][0] * escalaX, POSICIONES[c.id][1]] as [number, number],
-    })),
-    {
-      id: PROFE_BASE.id,
-      nombre: PROFE_BASE.nombre,
-      piel: PROFE_BASE.piel,
-      pelo: PROFE_BASE.peloEstilo,
-      colorPelo: PROFE_BASE.colorPelo,
-      polera: PROFE_BASE.polera,
-      pos: [POSICIONES.profe[0] * escalaX, POSICIONES.profe[1]] as [number, number],
-      esAdulto: true,
-    },
-  ];
-}
+const ContextScene = dynamic(() => import("@/components/three/ContextScene"), { ssr: false });
 
 type Dialogo =
   | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
-  | { tipo: "profe-apertura" }
+  | { tipo: "figura-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise };
 
 type Crisis = "no" | "respirando" | "mensaje";
 
-export default function SchoolGame3D() {
+function mezclar<T>(lista: T[]): T[] {
+  return [...lista].sort(() => Math.random() - 0.5);
+}
+
+export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
   const [avatar] = useState(() => storage.getAvatar());
   const [clinico] = useState(() => storage.getClinical());
 
@@ -102,11 +65,42 @@ export default function SchoolGame3D() {
     return () => window.removeEventListener("resize", calcular);
   }, []);
 
-  const npcs3d = useMemo(() => construirNpcs(escalaX), [escalaX]);
+  // posiciones vivas (en la Calle cambian con la migración: escenario en movimiento)
+  const [posiciones, setPosiciones] = useState<Record<string, [number, number]>>(
+    contexto.posiciones
+  );
+
+  const npcs3d = useMemo<Npc3D[]>(
+    () => [
+      ...contexto.npcs.map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        piel: c.piel,
+        pelo: c.peloEstilo,
+        colorPelo: c.colorPelo,
+        polera: c.polera,
+        pos: [posiciones[c.id][0] * escalaX, posiciones[c.id][1]] as [number, number],
+      })),
+      {
+        id: contexto.figura.id,
+        nombre: contexto.figura.nombre,
+        piel: contexto.figura.piel,
+        pelo: contexto.figura.peloEstilo,
+        colorPelo: contexto.figura.colorPelo,
+        polera: contexto.figura.polera,
+        pos: [
+          posiciones[contexto.figura.id][0] * escalaX,
+          posiciones[contexto.figura.id][1],
+        ] as [number, number],
+        esAdulto: true,
+      },
+    ],
+    [contexto, posiciones, escalaX]
+  );
 
   const [carga, setCarga] = useState<ChargeMap>({});
   const [burbujas, setBurbujas] = useState<Record<string, EmotionId | undefined>>(
-    BURBUJAS_INICIALES
+    contexto.burbujasIniciales
   );
   const [objetivo, setObjetivo] = useState<[number, number]>([0, 4]);
   const [dialogo, setDialogo] = useState<Dialogo | null>(null);
@@ -117,15 +111,21 @@ export default function SchoolGame3D() {
   const [aviso, setAviso] = useState<string | null>(null);
   const [orbe, setOrbe] = useState<(Orbe & { emocion: EmotionId; nombre: string }) | null>(null);
   const [animEjercicio, setAnimEjercicio] = useState<Exercise | null>(null);
+  // audífonos: herramienta de la Calle que reduce el estímulo (4.3)
+  const [audifonos, setAudifonos] = useState(false);
 
   const ultimaInteraccion = useRef(Date.now());
   const ocupadoRef = useRef(false);
   // acción que se ejecuta cuando el personaje llega caminando a su destino
   const alLlegarRef = useRef<(() => void) | null>(null);
+  const audifonosRef = useRef(false);
+  audifonosRef.current = audifonos;
 
   const total = totalCharge(carga);
   const abrumado = total >= 75;
   ocupadoRef.current = dialogo !== null || nubes || crisis !== "no" || animEjercicio !== null;
+
+  const rol = contexto.figura.rolCorto;
 
   useEffect(() => {
     const p = storage.getProgress();
@@ -161,9 +161,10 @@ export default function SchoolGame3D() {
     return () => clearInterval(t);
   }, [crisis]);
 
-  // Migración de burbujas por inactividad (3.2) y ruido fuerte periódico (4.1)
+  // Migración de burbujas por inactividad (3.2) y estímulo ambiental periódico (4.x)
   useEffect(() => {
     const intervaloMs = clinico.intervaloEventosSeg * 1000;
+    const intervaloRuidoMs = intervaloMs * contexto.factorIntervalo;
 
     const reloj = setInterval(() => {
       if (ocupadoRef.current) return;
@@ -171,13 +172,25 @@ export default function SchoolGame3D() {
         ultimaInteraccion.current = Date.now();
         setBurbujas((prev) => {
           const emociones = Object.values(prev).filter(Boolean) as EmotionId[];
-          const ids = COMPANEROS_BASE.map((c) => c.id).sort(() => Math.random() - 0.5);
+          const ids = mezclar(contexto.npcs.map((c) => c.id));
           const nuevas: Record<string, EmotionId | undefined> = {};
           emociones.forEach((e, i) => {
             nuevas[ids[i]] = e;
           });
           return nuevas;
         });
+        if (contexto.escenarioMovil) {
+          // los transeúntes cambian de lugar: el escenario se siente en movimiento (4.3)
+          setPosiciones((prev) => {
+            const ids = contexto.npcs.map((c) => c.id);
+            const lugares = mezclar(ids.map((id) => prev[id]));
+            const nuevas = { ...prev };
+            ids.forEach((id, i) => {
+              nuevas[id] = lugares[i];
+            });
+            return nuevas;
+          });
+        }
       }
     }, 1000);
 
@@ -185,16 +198,22 @@ export default function SchoolGame3D() {
       if (ocupadoRef.current) return;
       setRuido(true);
       setTimeout(() => setRuido(false), 1200);
-      setCarga((c) => sumarCarga(c, "miedo", CARGA_RUIDO));
-      setAviso("¡Eso fue un ruido fuerte! Tu cuerpo lo sintió.");
+      // los audífonos amortiguan el estímulo (4.3)
+      const protegido = audifonosRef.current;
+      setCarga((c) => sumarCarga(c, "miedo", protegido ? CARGA_RUIDO / 2 : CARGA_RUIDO));
+      setAviso(
+        protegido
+          ? `${contexto.evento.aviso} Los audífonos te protegieron un poco. 🎧`
+          : contexto.evento.aviso
+      );
       setTimeout(() => setAviso(null), 3000);
-    }, intervaloMs);
+    }, intervaloRuidoMs);
 
     return () => {
       clearInterval(reloj);
       clearInterval(ruidoTimer);
     };
-  }, [clinico.intervaloEventosSeg]);
+  }, [clinico.intervaloEventosSeg, contexto]);
 
   const marcarInteraccion = () => {
     ultimaInteraccion.current = Date.now();
@@ -216,17 +235,17 @@ export default function SchoolGame3D() {
     const limiteX = 6.2 * escalaX;
     setObjetivo([
       Math.max(-limiteX, Math.min(limiteX, npc.pos[0] + 0.9)),
-      Math.min(npc.pos[1] + 0.7, 4.4),
+      Math.max(contexto.zMin, Math.min(npc.pos[1] + 0.7, 4.4)),
     ]);
     const emocion = burbujas[id];
     // el diálogo se abre recién cuando el personaje llega caminando al NPC
     alLlegarRef.current = () => {
-      if (id === "profe") {
-        setDialogo({ tipo: "profe-apertura" });
+      if (id === contexto.figura.id) {
+        setDialogo({ tipo: "figura-apertura" });
       } else if (emocion) {
         setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
       } else {
-        setAviso(`${npc.nombre} dice: «¡Hola! ¿Jugamos al recreo?»`);
+        setAviso(`${npc.nombre} dice: «¡Hola! ¿Cómo estás hoy?»`);
         setTimeout(() => setAviso(null), 2500);
       }
     };
@@ -244,7 +263,7 @@ export default function SchoolGame3D() {
     // reaparece otra burbuja más tarde, manteniendo la mezcla (5.2)
     setTimeout(() => {
       setBurbujas((prev) => {
-        const libres = COMPANEROS_BASE.filter((c) => !prev[c.id]);
+        const libres = contexto.npcs.filter((c) => !prev[c.id]);
         if (libres.length === 0) return prev;
         const elegido = libres[Math.floor(Math.random() * libres.length)];
         const pool: EmotionId[] =
@@ -256,7 +275,7 @@ export default function SchoolGame3D() {
     const info = EMOTIONS[emocion];
     if (info.displacentera) {
       // el color viaja en 3D hasta la guatita (3.3)
-      const pos = POSICIONES[npcId];
+      const pos = posiciones[npcId];
       setOrbe({
         key: Date.now(),
         color: info.color,
@@ -266,7 +285,7 @@ export default function SchoolGame3D() {
       });
     } else if (emocion === "calma") {
       setCarga((c) => reducirTotal(c, ALIVIO_AMIGO_CALMA));
-      setAviso("Estar con un amigo tranquilo ayudó un poquito a tu cuerpo. 💚");
+      setAviso("Estar con alguien tranquilo ayudó un poquito a tu cuerpo. 💚");
       setTimeout(() => setAviso(null), 3000);
     } else {
       setAviso("¡Qué entretenido! Compartir alegría también es parte del día. 💛");
@@ -284,7 +303,7 @@ export default function SchoolGame3D() {
   }
 
   // Figura de apoyo: baja fuerte pero NO a cero (salvaguarda 5.3)
-  function contarALaProfe(emocion: EmotionId) {
+  function contarALaFigura(emocion: EmotionId) {
     setDialogo(null);
     setNubes(true);
     setTimeout(() => {
@@ -294,7 +313,7 @@ export default function SchoolGame3D() {
         return { ...c, [emocion]: Math.max(v * 0.3, 4) };
       });
       setAviso(
-        "Contarle a la profe te ayudó mucho. Tu cuerpo aún siente un poquito, y está bien: ahora puedes usar tus herramientas."
+        `Contarle a ${rol} te ayudó mucho. Tu cuerpo aún siente un poquito, y está bien: ahora puedes usar tus herramientas.`
       );
       setTimeout(() => setAviso(null), 4500);
     }, 2800);
@@ -340,8 +359,9 @@ export default function SchoolGame3D() {
   // ---------- render ----------
 
   return (
-    <div className="escena-envoltorio">
-      <SchoolScene
+    <div className={`escena-envoltorio escena-${contexto.id}`}>
+      <ContextScene
+        entorno={contexto.id}
         avatar={avatar}
         charge={carga}
         abrumado={abrumado}
@@ -351,6 +371,8 @@ export default function SchoolGame3D() {
         orbe={orbe}
         escalaX={escalaX}
         animacionEjercicio={animEjercicio?.animacion ?? null}
+        audifonos={audifonos}
+        zMin={contexto.zMin}
         onSuelo={tocarSuelo}
         onNpc={tocarNpc}
         onOrbeLlega={llegoOrbe}
@@ -373,11 +395,29 @@ export default function SchoolGame3D() {
         >
           🧰 Mis herramientas
         </button>
+        {contexto.conAudifonos && (
+          <button
+            className="hud-boton"
+            style={audifonos ? { background: "var(--verde)", color: "white" } : undefined}
+            onClick={() => {
+              marcarInteraccion();
+              setAudifonos((a) => !a);
+              setAviso(
+                audifonos
+                  ? "Te quitaste los audífonos."
+                  : "🎧 Audífonos puestos: los ruidos fuertes molestarán menos."
+              );
+              setTimeout(() => setAviso(null), 3000);
+            }}
+          >
+            🎧 Audífonos {audifonos ? "✓" : ""}
+          </button>
+        )}
       </div>
 
       {abrumado && crisis === "no" && !aviso && (
         <div className="aviso-carga">
-          Tu guatita está muy llena… ¿probamos una herramienta o le contamos a la profe?
+          Tu guatita está muy llena… ¿probamos una herramienta o le contamos a {rol}?
         </div>
       )}
       {aviso && (
@@ -386,7 +426,7 @@ export default function SchoolGame3D() {
         </div>
       )}
 
-      {ruido && <div className="ruido-fuerte">💥 ¡RUIDO FUERTE!</div>}
+      {ruido && <div className="ruido-fuerte">{contexto.evento.titulo}</div>}
 
       {/* banner no bloqueante: deja ver la animación del personaje en la escena */}
       {animEjercicio && (
@@ -402,7 +442,7 @@ export default function SchoolGame3D() {
         <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.nombre}</span>
-            <p className="dialogo-texto">«{LINEAS_NPC[dialogo.emocion]}»</p>
+            <p className="dialogo-texto">«{contexto.lineas[dialogo.emocion]}»</p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}
@@ -414,10 +454,10 @@ export default function SchoolGame3D() {
         </div>
       )}
 
-      {dialogo?.tipo === "profe-apertura" && (
+      {dialogo?.tipo === "figura-apertura" && (
         <div className="velo">
           <div className="dialogo">
-            <span className="dialogo-hablante">{PROFE_BASE.nombre}</span>
+            <span className="dialogo-hablante">{contexto.figura.nombre}</span>
             <p className="dialogo-texto">«¿En qué te puedo ayudar hoy?»</p>
             {emocionesAcumuladas.length === 0 ? (
               <>
@@ -425,7 +465,7 @@ export default function SchoolGame3D() {
                   Tu cuerpo está tranquilo ahora mismo.
                 </p>
                 <button className="boton verde" onClick={() => setDialogo(null)}>
-                  «¡Solo quería saludarte, profe!»
+                  «¡Solo quería saludarte!»
                 </button>
               </>
             ) : (
@@ -434,14 +474,14 @@ export default function SchoolGame3D() {
                   key={id}
                   className="opcion-coloreada"
                   style={{ background: EMOTIONS[id].color }}
-                  onClick={() => contarALaProfe(id)}
+                  onClick={() => contarALaFigura(id)}
                 >
                   «Siento {EMOTIONS[id].nombre} y te quiero contar…»
                 </button>
               ))
             )}
             <button className="boton secundario" onClick={() => setDialogo(null)}>
-              Volver a la sala
+              Volver
             </button>
           </div>
         </div>
@@ -505,7 +545,7 @@ export default function SchoolGame3D() {
           <div className="nube" style={{ width: 240, height: 90, right: "10%", top: "40%", animationDelay: "0.6s" }} />
           <div className="nube" style={{ width: 150, height: 60, left: "30%", bottom: "18%", animationDelay: "1.1s" }} />
           <p style={{ fontSize: "1.3rem", fontWeight: 700, color: "#4a6e8a", zIndex: 1 }}>
-            Conversando con la profe…
+            Conversando con {rol}…
           </p>
         </div>
       )}
@@ -517,7 +557,7 @@ export default function SchoolGame3D() {
               <p style={{ fontSize: "1.35rem", fontWeight: 800, color: "#4a6e8a", textAlign: "center", margin: 0 }}>
                 Tu cuerpo se llenó demasiado y necesita una pausa.
                 <br />
-                La profe está contigo. Respiremos juntos.
+                {contexto.figura.frasePresencia} Respiremos juntos.
               </p>
               <div className="respiracion-circulo" />
               <p style={{ fontSize: "1.6rem", fontWeight: 800, color: "#357fb0", margin: 0 }}>
@@ -528,11 +568,11 @@ export default function SchoolGame3D() {
             <>
               <p style={{ fontSize: "1.2rem", fontWeight: 700, color: "#4a6e8a", textAlign: "center", maxWidth: 420, margin: 0 }}>
                 A veces la carga se llena y el cuerpo necesita parar. No es tu culpa y no estás solo.
-                La próxima vez puedes usar tus herramientas un poquito antes, o contarle a la profe
-                cómo te sientes.
+                La próxima vez puedes usar tus herramientas un poquito antes, o contarle a {rol} cómo
+                te sientes.
               </p>
               <button className="boton verde" style={{ maxWidth: 280 }} onClick={salirDeCrisis}>
-                Volver a la sala
+                Volver a jugar
               </button>
             </>
           )}

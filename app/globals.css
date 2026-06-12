@@ -159,6 +159,15 @@ a {
   touch-action: manipulation;
 }
 
+/* cielo/fondo por contexto (visible detrás del canvas 3D) */
+.escena-casa {
+  background: linear-gradient(#f7ead0 0%, #f3e3c3 55%, #e3c49a 55%, #d9b38c 100%);
+}
+
+.escena-calle {
+  background: linear-gradient(#aedcf5 0%, #cfeafa 60%, #d6cfc2 60%, #cdc6ba 100%);
+}
+
 .escena-pizarra {
   position: absolute;
   left: 6%;

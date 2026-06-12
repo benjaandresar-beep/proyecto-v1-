@@ -1,17 +1,29 @@
 "use client";
 
-// Bloque de advertencia y asentimiento previo al contexto (salvaguarda 5.1).
-// Se muestra SIEMPRE antes de entrar. Texto provisional, lo valida el responsable clínico.
+// Bloque de advertencia y asentimiento previo a CADA contexto (salvaguarda 5.1).
+// Texto provisional, lo valida el responsable clínico.
 
 import Link from "next/link";
 
-export default function AsentimientoEscuela({ onConfirmar }: { onConfirmar: () => void }) {
+export default function Asentimiento({
+  nombre,
+  emoji,
+  quienes,
+  onConfirmar,
+}: {
+  nombre: string;
+  emoji: string;
+  quienes: string;
+  onConfirmar: () => void;
+}) {
   return (
     <main className="pantalla" style={{ justifyContent: "center" }}>
       <div className="tarjeta" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <h1 className="titulo">Antes de entrar a la Escuela 🏫</h1>
+        <h1 className="titulo">
+          Antes de entrar a la {nombre} {emoji}
+        </h1>
         <p className="dialogo-texto">
-          En este juego vas a conocer cómo se sienten tus compañeros. Recuerda algo muy importante:
+          En este juego vas a conocer cómo se sienten {quienes}. Recuerda algo muy importante:
         </p>
         <p className="dialogo-texto" style={{ fontWeight: 700 }}>
           Tú NO eres responsable de hacer que todos se sientan bien.
