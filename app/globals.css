@@ -1,0 +1,435 @@
+:root {
+  --fondo: #fdf6ec;
+  --tarjeta: #ffffff;
+  --tinta: #3d3a36;
+  --tinta-suave: #7a7368;
+  --acento: #4a9fd6;
+  --acento-oscuro: #357fb0;
+  --verde: #67c08a;
+  --rojo: #e0503f;
+  --borde: #e8ddcc;
+  --sombra: 0 4px 16px rgba(80, 60, 30, 0.1);
+  --radio: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: var(--acento-oscuro);
+}
+
+/* ---------- layout general ---------- */
+
+.pantalla {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 18px 48px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.titulo {
+  font-size: 1.7rem;
+  margin: 0;
+  text-align: center;
+}
+
+.subtitulo {
+  color: var(--tinta-suave);
+  text-align: center;
+  margin: 0;
+}
+
+.tarjeta {
+  background: var(--tarjeta);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 20px;
+}
+
+.boton {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 16px 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: var(--acento);
+  color: white;
+  transition: transform 0.1s, background 0.2s;
+  text-align: center;
+  text-decoration: none;
+}
+
+.boton:active {
+  transform: scale(0.97);
+}
+
+.boton.secundario {
+  background: #efe7d8;
+  color: var(--tinta);
+}
+
+.boton.verde {
+  background: var(--verde);
+}
+
+.boton:disabled {
+  background: #d8d2c6;
+  color: #99917f;
+  cursor: not-allowed;
+}
+
+.fila-botones {
+  display: flex;
+  gap: 12px;
+}
+
+.nota-pie {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--tinta-suave);
+  margin-top: auto;
+}
+
+/* ---------- editor de avatar ---------- */
+
+.muestrario {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.muestra-color {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  padding: 0;
+}
+
+.muestra-color.activa {
+  border-color: var(--tinta);
+}
+
+.muestra-opcion {
+  border: 2px solid var(--borde);
+  background: var(--tarjeta);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 1rem;
+}
+
+.muestra-opcion.activa {
+  border-color: var(--acento);
+  background: #e8f3fb;
+  font-weight: 700;
+}
+
+/* ---------- escena de la escuela ---------- */
+
+.escena-envoltorio {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(#bfe3f2 0%, #bfe3f2 55%, #e8d9b8 55%, #dcc89f 100%);
+  touch-action: manipulation;
+}
+
+.escena-pizarra {
+  position: absolute;
+  left: 6%;
+  top: 6%;
+  width: 34%;
+  height: 22%;
+  background: #3f7d5a;
+  border: 8px solid #8a6240;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e9f5ee;
+  font-size: clamp(0.7rem, 2.4vw, 1.1rem);
+  font-weight: 700;
+  text-align: center;
+  padding: 4px;
+}
+
+.escena-ventana {
+  position: absolute;
+  width: 16%;
+  height: 18%;
+  background: linear-gradient(#cdeafd, #f3fbff);
+  border: 6px solid #fff;
+  border-radius: 8px;
+  box-shadow: var(--sombra);
+}
+
+.npc {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  border: none;
+  background: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: left 1.2s ease, top 1.2s ease;
+  z-index: 4;
+}
+
+.npc-nombre {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #5d564b;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 8px;
+  padding: 1px 7px;
+  margin-top: 2px;
+}
+
+.burbuja {
+  position: relative;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 50% 50% 50% 12%;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  animation: burbuja-late 2.2s ease-in-out infinite;
+}
+
+@keyframes burbuja-late {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+.jugador {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  transition: left 0.45s ease, top 0.45s ease;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.avatar-shake {
+  animation: tiemblo 0.5s ease-in-out infinite;
+}
+
+@keyframes tiemblo {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+/* punto de color que viaja al estómago (interocepción 3.3) */
+.punto-viaje {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  z-index: 9;
+  pointer-events: none;
+  transition: left 1.1s cubic-bezier(0.5, 0, 0.6, 1), top 1.1s cubic-bezier(0.5, 0, 0.6, 1);
+  box-shadow: 0 0 14px 4px rgba(255, 255, 255, 0.5);
+}
+
+/* ruido fuerte */
+.ruido-fuerte {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 235, 130, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #7a5b00;
+  z-index: 20;
+  animation: sacudida 0.18s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes sacudida {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-6px, 3px); }
+  75% { transform: translate(6px, -3px); }
+}
+
+/* ---------- diálogos ---------- */
+
+.velo {
+  position: fixed;
+  inset: 0;
+  background: rgba(40, 35, 28, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 30;
+  padding: 16px;
+}
+
+.dialogo {
+  background: var(--tarjeta);
+  border-radius: 22px 22px 16px 16px;
+  box-shadow: var(--sombra);
+  width: 100%;
+  max-width: 520px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: sube 0.25s ease-out;
+}
+
+@keyframes sube {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.dialogo-hablante {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--tinta-suave);
+}
+
+.dialogo-texto {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.opcion-coloreada {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: white;
+  text-align: left;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* transición de nubes (conversación con figura de apoyo, 3.4) */
+.nubes {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: linear-gradient(#dceefb, #f7fbff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: nubes-aparece 0.6s ease-in;
+}
+
+@keyframes nubes-aparece {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.nube {
+  position: absolute;
+  background: white;
+  border-radius: 999px;
+  opacity: 0.9;
+  animation: nube-flota 3s ease-in-out infinite;
+}
+
+@keyframes nube-flota {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(24px); }
+}
+
+/* ---------- crisis: pausa guiada de calma ---------- */
+
+.respiracion-circulo {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #9fd4ef, #4a9fd6);
+  margin: 0 auto;
+  animation: respira 8s ease-in-out infinite;
+}
+
+@keyframes respira {
+  0%, 100% { transform: scale(0.65); }
+  50% { transform: scale(1.15); }
+}
+
+/* ---------- HUD del juego ---------- */
+
+.hud {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.hud-boton {
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--sombra);
+  padding: 10px 16px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--tinta);
+}
+
+.aviso-carga {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  transform: translateX(-50%);
+  z-index: 15;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--rojo);
+  color: var(--rojo);
+  border-radius: 14px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-align: center;
+  max-width: 80%;
+  animation: burbuja-late 1.6s ease-in-out infinite;
+}
+
+.salir-enlace {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 15;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--tinta);
+}
