@@ -47,6 +47,8 @@ interface SceneProps {
   audifonos: boolean;
   /** límite frontal del área caminable */
   zMin: number;
+  /** oculta las etiquetas (nombre + burbuja) mientras hay un overlay activo */
+  mostrarEtiquetas: boolean;
   onSuelo: (x: number, z: number) => void;
   onNpc: (id: string) => void;
   onOrbeLlega: () => void;
@@ -191,11 +193,13 @@ function NpcAnimado({
   npc,
   emocion,
   factorEtiqueta,
+  mostrarEtiquetas,
   onNpc,
 }: {
   npc: Npc3D;
   emocion: EmotionId | undefined;
   factorEtiqueta: number;
+  mostrarEtiquetas: boolean;
   onNpc: (id: string) => void;
 }) {
   const ref = useRef<THREE.Group>(null);
@@ -225,23 +229,25 @@ function NpcAnimado({
         polera={npc.polera}
         esAdulto={npc.esAdulto}
       />
-      <Html
-        position={[0, npc.esAdulto ? 3.1 : 2.5, 0]}
-        center
-        distanceFactor={factorEtiqueta}
-        // limita el z-index para que las etiquetas queden SIEMPRE bajo los overlays
-        // del juego (HUD 15, banner 18, velo 30, nubes/crisis 40)
-        zIndexRange={[12, 0]}
-        style={{ pointerEvents: "none", textAlign: "center" }}
-      >
-        {emocion && (
-          <div
-            className="burbuja"
-            style={{ background: EMOTIONS[emocion].color, margin: "0 auto 4px" }}
-          />
-        )}
-        <div className="npc-nombre">{npc.nombre}</div>
-      </Html>
+      {mostrarEtiquetas && (
+        <Html
+          position={[0, npc.esAdulto ? 3.1 : 2.5, 0]}
+          center
+          distanceFactor={factorEtiqueta}
+          // limita el z-index para que las etiquetas queden SIEMPRE bajo los overlays
+          // del juego (HUD 15, banner 18, velo 30, nubes/crisis 40)
+          zIndexRange={[12, 0]}
+          style={{ pointerEvents: "none", textAlign: "center" }}
+        >
+          {emocion && (
+            <div
+              className="burbuja"
+              style={{ background: EMOTIONS[emocion].color, margin: "0 auto 4px" }}
+            />
+          )}
+          <div className="npc-nombre">{npc.nombre}</div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -582,6 +588,7 @@ export default function ContextScene({
   animacionEjercicio,
   audifonos,
   zMin,
+  mostrarEtiquetas,
   onSuelo,
   onNpc,
   onOrbeLlega,
@@ -614,6 +621,7 @@ export default function ContextScene({
           npc={npc}
           emocion={burbujas[npc.id]}
           factorEtiqueta={factorEtiqueta}
+          mostrarEtiquetas={mostrarEtiquetas}
           onNpc={onNpc}
         />
       ))}

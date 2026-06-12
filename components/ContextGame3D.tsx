@@ -389,6 +389,7 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
         animacionEjercicio={animEjercicio?.animacion ?? null}
         audifonos={audifonos}
         zMin={contexto.zMin}
+        mostrarEtiquetas={dialogo === null && !nubes && crisis === "no" && animEjercicio === null}
         onSuelo={tocarSuelo}
         onNpc={tocarNpc}
         onOrbeLlega={llegoOrbe}
