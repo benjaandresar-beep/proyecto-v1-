@@ -94,16 +94,20 @@ export default function CharacterMesh({
       brazoDz = BRAZO_BASE_D - s * 2.1;
       alto = Math.sin(t * 1.7) * 0.07;
     } else if (caminando) {
-      const f = Math.sin(t * 9);
-      piernaIx = f * 0.55;
-      piernaDx = -f * 0.55;
-      brazoIx = -f * 0.45;
-      brazoDx = f * 0.45;
-      alto = Math.abs(Math.sin(t * 9)) * 0.04;
+      // ciclo de caminata marcado: zancada amplia, braceo opuesto,
+      // rebote por paso y leve inclinación hacia adelante
+      const f = Math.sin(t * 11);
+      piernaIx = f * 0.8;
+      piernaDx = -f * 0.8;
+      brazoIx = -f * 0.6;
+      brazoDx = f * 0.6;
+      alto = Math.abs(Math.cos(t * 11)) * 0.06;
+      inclinacion = 0.1;
     }
 
-    // transición suave hacia la pose objetivo
-    const k = 14;
+    // transición suave hacia la pose objetivo (alta velocidad de respuesta
+    // para que la zancada no se atenúe)
+    const k = 22;
     pI.rotation.x = THREE.MathUtils.damp(pI.rotation.x, piernaIx, k, delta);
     pD.rotation.x = THREE.MathUtils.damp(pD.rotation.x, piernaDx, k, delta);
     bI.rotation.x = THREE.MathUtils.damp(bI.rotation.x, brazoIx, k, delta);

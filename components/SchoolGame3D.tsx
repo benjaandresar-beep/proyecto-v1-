@@ -120,6 +120,8 @@ export default function SchoolGame3D() {
 
   const ultimaInteraccion = useRef(Date.now());
   const ocupadoRef = useRef(false);
+  // acción que se ejecuta cuando el personaje llega caminando a su destino
+  const alLlegarRef = useRef<(() => void) | null>(null);
 
   const total = totalCharge(carga);
   const abrumado = total >= 75;
@@ -202,6 +204,7 @@ export default function SchoolGame3D() {
 
   function tocarSuelo(x: number, z: number) {
     if (ocupadoRef.current) return;
+    alLlegarRef.current = null; // caminar libre cancela el diálogo pendiente
     setObjetivo([x, z]);
     marcarInteraccion();
   }
@@ -216,7 +219,8 @@ export default function SchoolGame3D() {
       Math.min(npc.pos[1] + 0.7, 4.4),
     ]);
     const emocion = burbujas[id];
-    setTimeout(() => {
+    // el diálogo se abre recién cuando el personaje llega caminando al NPC
+    alLlegarRef.current = () => {
       if (id === "profe") {
         setDialogo({ tipo: "profe-apertura" });
       } else if (emocion) {
@@ -225,7 +229,13 @@ export default function SchoolGame3D() {
         setAviso(`${npc.nombre} dice: «¡Hola! ¿Jugamos al recreo?»`);
         setTimeout(() => setAviso(null), 2500);
       }
-    }, 700);
+    };
+  }
+
+  function llegoAlDestino() {
+    const accion = alLlegarRef.current;
+    alLlegarRef.current = null;
+    accion?.();
   }
 
   function escucharNpc(npcId: string, nombre: string, emocion: EmotionId) {
@@ -344,6 +354,7 @@ export default function SchoolGame3D() {
         onSuelo={tocarSuelo}
         onNpc={tocarNpc}
         onOrbeLlega={llegoOrbe}
+        onLlegada={llegoAlDestino}
       />
 
       <Link href="/" className="salir-enlace">

@@ -44,6 +44,8 @@ interface SceneProps {
   onSuelo: (x: number, z: number) => void;
   onNpc: (id: string) => void;
   onOrbeLlega: () => void;
+  /** se dispara cuando el personaje termina de caminar hasta su destino */
+  onLlegada: () => void;
 }
 
 const DIST_BASE = 11.6; // distancia de cámara en escritorio
@@ -85,6 +87,7 @@ function Jugador({
   objetivo,
   animacionEjercicio,
   jugadorRef,
+  onLlegada,
 }: {
   avatar: AvatarConfig;
   charge: ChargeMap;
@@ -92,27 +95,53 @@ function Jugador({
   objetivo: [number, number];
   animacionEjercicio: ExerciseAnimation | null;
   jugadorRef: React.RefObject<THREE.Group | null>;
+  onLlegada: () => void;
 }) {
-  // estado de caminata con histéresis para activar el ciclo de animación
+  // estado de caminata para activar el ciclo de animación
   const [caminando, setCaminando] = useState(false);
   const caminandoRef = useRef(false);
+  // hay una llegada pendiente de notificar cada vez que cambia el destino
+  const llegadaPendiente = useRef(false);
+  const ultimoObjetivo = useRef(objetivo);
+  if (objetivo !== ultimoObjetivo.current) {
+    ultimoObjetivo.current = objetivo;
+    llegadaPendiente.current = true;
+  }
+
+  const VELOCIDAD = 2.6; // unidades por segundo, constante como en un videojuego
 
   useFrame((_, delta) => {
     const g = jugadorRef.current;
     if (!g) return;
-    const destino = new THREE.Vector3(objetivo[0], 0, objetivo[1]);
-    const paso = Math.min(delta * 3.2, 1);
-    g.position.lerp(destino, paso);
-    const dx = destino.x - g.position.x;
-    const dz = destino.z - g.position.z;
-    const dist2 = dx * dx + dz * dz;
-    // mirar hacia donde camina
-    if (dist2 > 0.01) {
-      g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, Math.atan2(dx, dz), 0.1);
-    } else if (!animacionEjercicio) {
-      g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, 0, 0.06); // vuelve a mirar de frente
+    const dx = objetivo[0] - g.position.x;
+    const dz = objetivo[1] - g.position.z;
+    const dist = Math.hypot(dx, dz);
+    let enMovimiento = false;
+
+    if (dist > 0.05) {
+      enMovimiento = true;
+      // avanza a velocidad constante hacia el punto tocado (sin patinar)
+      const paso = Math.min(VELOCIDAD * delta, dist);
+      g.position.x += (dx / dist) * paso;
+      g.position.z += (dz / dist) * paso;
+      // gira con suavidad hacia la dirección de marcha (camino angular corto)
+      const anguloObjetivo = Math.atan2(dx, dz);
+      let giro = anguloObjetivo - g.rotation.y;
+      giro = Math.atan2(Math.sin(giro), Math.cos(giro));
+      g.rotation.y += giro * Math.min(10 * delta, 1);
+    } else {
+      if (llegadaPendiente.current) {
+        llegadaPendiente.current = false;
+        onLlegada();
+      }
+      if (!animacionEjercicio) {
+        // al detenerse vuelve a mirar de frente, despacio
+        let giro = -g.rotation.y;
+        giro = Math.atan2(Math.sin(giro), Math.cos(giro));
+        g.rotation.y += giro * Math.min(3 * delta, 1);
+      }
     }
-    const enMovimiento = dist2 > 0.04;
+
     if (enMovimiento !== caminandoRef.current) {
       caminandoRef.current = enMovimiento;
       setCaminando(enMovimiento);
@@ -269,6 +298,7 @@ export default function SchoolScene({
   onSuelo,
   onNpc,
   onOrbeLlega,
+  onLlegada,
 }: SceneProps) {
   const jugadorRef = useRef<THREE.Group | null>(null);
   // las etiquetas y burbujas mantienen tamaño legible aunque la cámara se aleje
@@ -331,6 +361,7 @@ export default function SchoolScene({
         objetivo={objetivo}
         animacionEjercicio={animacionEjercicio}
         jugadorRef={jugadorRef}
+        onLlegada={onLlegada}
       />
 
       {orbe && <OrbeViajero orbe={orbe} jugadorRef={jugadorRef} onLlega={onOrbeLlega} />}
