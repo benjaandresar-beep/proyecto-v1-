@@ -1,24 +1,23 @@
 "use client";
 
-// Contexto Casa (4.2, Fase 2). Antes de entrar, siempre el asentimiento (5.1).
+// Contexto Casa explorable (4.2, ampliado). Antes de entrar, siempre el
+// asentimiento (5.1).
 
 import { useState } from "react";
 import Asentimiento from "@/components/Asentimiento";
-import ContextGame3D from "@/components/ContextGame3D";
-import { CONTEXTOS } from "@/lib/contexts";
+import CasaGame3D from "@/components/CasaGame3D";
 
 export default function Casa() {
   const [asentido, setAsentido] = useState(false);
-  const contexto = CONTEXTOS.casa;
   if (!asentido) {
     return (
       <Asentimiento
-        nombre={contexto.nombre}
-        emoji={contexto.emoji}
-        quienes={contexto.asentimientoQuienes}
+        nombre="Casa"
+        emoji="🏠"
+        quienes="tu familia"
         onConfirmar={() => setAsentido(true)}
       />
     );
   }
-  return <ContextGame3D contexto={contexto} />;
+  return <CasaGame3D />;
 }
