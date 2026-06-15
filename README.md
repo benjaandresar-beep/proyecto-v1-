@@ -28,6 +28,7 @@ npm run build    # build de producción
 | `/escuela` | Contexto Escuela **explorable**: sala de clases (compañeros + profe) con puerta que se abre a un patio amplio (cancha, baños, mesas de ping pong, palmeras, cancha de vóleibol) |
 | `/casa` | Contexto Casa **explorable**: casa de un piso con living, patio (perro, gato, alimentar), pasillos y habitaciones conectados por puertas que se abren |
 | `/calle` | Contexto Calle (4.3): transeúntes que cambian de lugar, autos cruzando, bocinazos más frecuentes, papá que acompaña y audífonos que reducen el estímulo |
+| `/terapia` | Contexto Terapia **explorable**: patio con reja → recepción (pacientes + psicólogo de apoyo) → salas de Psicología, Fonoaudiología y Terapia Ocupacional, cada una con su terapeuta y objetos (sillones/juguetes, teléfono de juguete/ventana, columpio/trampolín/plasticinas/bloques) |
 | `/escuela-2d` | La misma mecánica en la escena 2D original, conservada para comparar en validaciones |
 | `/clinico` | Config rápida del dispositivo: set de reguladores (5.4) y ritmo de eventos |
 | `/pro` | Lado profesional: registro/login declarativo, casos por código (6.1), ficha → perfil (6.2), guía con revisión por bloques (6.3), clave del juego (6.4) |

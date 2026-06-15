@@ -45,6 +45,10 @@ export default function Inicio() {
         </Link>
       </div>
 
+      <Link href="/terapia" className="boton" style={{ background: "#7a6db0" }}>
+        🧩 Centro de Terapia
+      </Link>
+
       {totalReales > 0 && (
         <div className="tarjeta" style={{ textAlign: "center" }}>
           <strong>🌟 Ejercicios que hiciste de verdad: {totalReales}</strong>
