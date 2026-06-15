@@ -25,7 +25,7 @@ npm run build    # build de producción
 | --- | --- |
 | `/` | Inicio: avatar 3D, entrada a los tres contextos y logros del puente a la vida real |
 | `/avatar` | Editor del personaje (piel, pelo, polera) con vista previa 3D |
-| `/escuela` | Contexto Escuela (4.1): compañeros, profe, ruido fuerte periódico |
+| `/escuela` | Contexto Escuela **explorable**: sala de clases (compañeros + profe) con puerta que se abre a un patio amplio (cancha, baños, mesas de ping pong, palmeras, cancha de vóleibol) |
 | `/casa` | Contexto Casa **explorable**: casa de un piso con living, patio (perro, gato, alimentar), pasillos y habitaciones conectados por puertas que se abren |
 | `/calle` | Contexto Calle (4.3): transeúntes que cambian de lugar, autos cruzando, bocinazos más frecuentes, papá que acompaña y audífonos que reducen el estímulo |
 | `/escuela-2d` | La misma mecánica en la escena 2D original, conservada para comparar en validaciones |

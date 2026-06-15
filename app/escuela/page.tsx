@@ -1,24 +1,23 @@
 "use client";
 
-// Contexto Escuela (4.1, MVP). Antes de entrar, siempre el asentimiento (5.1).
+// Contexto Escuela explorable (4.1, ampliado): sala de clases + patio.
+// Antes de entrar, siempre el asentimiento (5.1).
 
 import { useState } from "react";
 import Asentimiento from "@/components/Asentimiento";
-import ContextGame3D from "@/components/ContextGame3D";
-import { CONTEXTOS } from "@/lib/contexts";
+import EscuelaGame3D from "@/components/EscuelaGame3D";
 
 export default function Escuela() {
   const [asentido, setAsentido] = useState(false);
-  const contexto = CONTEXTOS.escuela;
   if (!asentido) {
     return (
       <Asentimiento
-        nombre={contexto.nombre}
-        emoji={contexto.emoji}
-        quienes={contexto.asentimientoQuienes}
+        nombre="Escuela"
+        emoji="🏫"
+        quienes="tus compañeros"
         onConfirmar={() => setAsentido(true)}
       />
     );
   }
-  return <ContextGame3D contexto={contexto} />;
+  return <EscuelaGame3D />;
 }
