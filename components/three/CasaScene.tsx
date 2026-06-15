@@ -617,28 +617,28 @@ function Shell({ area }: { area: AreaDef }) {
           <planeGeometry args={[16, 12]} />
           <meshStandardMaterial color={area.piso} />
         </mesh>
-        {/* reja del fondo y lados */}
-        {[-5, 5].map((x) => (
-          <mesh key={x} position={[x, 1, -4.6]}>
-            <boxGeometry args={[0.16, 2, 0.16]} />
-            <meshStandardMaterial color="#cfcfcf" flatShading />
-          </mesh>
-        ))}
-        <mesh position={[0, 1.6, -4.7]}>
-          <boxGeometry args={[12, 0.12, 0.12]} />
-          <meshStandardMaterial color="#cfcfcf" flatShading />
-        </mesh>
-        {Array.from({ length: 13 }, (_, i) => -6 + i).map((x) => (
-          <mesh key={x} position={[x, 1, -4.7]}>
-            <boxGeometry args={[0.08, 2, 0.08]} />
-            <meshStandardMaterial color="#dcdcdc" flatShading />
-          </mesh>
-        ))}
-        {/* muro de la casa (donde está la puerta de volver) */}
-        <mesh position={[0, 2, 4.9]}>
+        {/* muro de la casa AL FONDO (donde está la puerta de volver adentro) */}
+        <mesh position={[0, 2, -5]}>
           <boxGeometry args={[16, 4, 0.3]} />
           <meshStandardMaterial color="#efd9b0" />
         </mesh>
+        {/* reja baja AL FRENTE (borde del patio, no tapa la vista) */}
+        {[-5.5, 5.5].map((x) => (
+          <mesh key={x} position={[x, 0.5, 4.7]}>
+            <boxGeometry args={[0.16, 1, 0.16]} />
+            <meshStandardMaterial color="#cfcfcf" flatShading />
+          </mesh>
+        ))}
+        <mesh position={[0, 0.8, 4.7]}>
+          <boxGeometry args={[12, 0.1, 0.1]} />
+          <meshStandardMaterial color="#cfcfcf" flatShading />
+        </mesh>
+        {Array.from({ length: 13 }, (_, i) => -6 + i).map((x) => (
+          <mesh key={x} position={[x, 0.45, 4.7]}>
+            <boxGeometry args={[0.07, 0.9, 0.07]} />
+            <meshStandardMaterial color="#dcdcdc" flatShading />
+          </mesh>
+        ))}
       </group>
     );
   }
