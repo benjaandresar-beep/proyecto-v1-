@@ -1,14 +1,27 @@
 "use client";
 
-// Motor del juego para cualquier contexto (Escuela / Casa / Calle, sección 4).
-// Misma mecánica central y salvaguardas (secciones 3 y 5) en los tres:
-// cambian los NPC, la figura de apoyo, los estímulos y el entorno 3D.
+// Contexto Calle explorable: la calle (sobrecarga urbana, autos, transeúntes,
+// audífonos) con acceso a una plaza/parque con caminito, árboles, juegos y
+// niños jugando. Mantiene la mecánica de regulación en ambas áreas.
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Npc3D, Orbe } from "@/components/three/ContextScene";
-import { ContextDef } from "@/lib/contexts";
+import type { Npc3D, Orbe } from "@/components/three/CalleScene";
+import {
+  CALLE_AREAS,
+  CalleArea,
+  PuertaDef,
+  CALLE_FIGURA,
+  CALLE_NPCS,
+  CALLE_LINEAS,
+  CALLE_BURBUJAS,
+  CALLE_POS,
+  PLAZA_NINOS,
+  PLAZA_POS,
+  PLAZA_BURBUJAS,
+  PLAZA_LINEAS,
+} from "@/lib/calle";
 import {
   ChargeMap,
   CHARGE_MAX,
@@ -30,7 +43,49 @@ import {
 } from "@/lib/school";
 import { storage } from "@/lib/storage";
 
-const ContextScene = dynamic(() => import("@/components/three/ContextScene"), { ssr: false });
+const CalleScene = dynamic(() => import("@/components/three/CalleScene"), { ssr: false });
+
+const CALLE_IDS = CALLE_NPCS.map((n) => n.id);
+const PLAZA_IDS = PLAZA_NINOS.map((n) => n.id);
+
+function calleNpc(id: string): Npc3D {
+  const base = id === CALLE_FIGURA.id ? CALLE_FIGURA : CALLE_NPCS.find((n) => n.id === id)!;
+  return {
+    id: base.id,
+    nombre: base.nombre,
+    piel: base.piel,
+    pelo: base.peloEstilo,
+    colorPelo: base.colorPelo,
+    polera: base.polera,
+    pos: CALLE_POS[id],
+    esAdulto: id === CALLE_FIGURA.id,
+  };
+}
+
+function plazaNpc(id: string): Npc3D {
+  if (id === CALLE_FIGURA.id) {
+    return {
+      id: CALLE_FIGURA.id,
+      nombre: CALLE_FIGURA.nombre,
+      piel: CALLE_FIGURA.piel,
+      pelo: CALLE_FIGURA.peloEstilo,
+      colorPelo: CALLE_FIGURA.colorPelo,
+      polera: CALLE_FIGURA.polera,
+      pos: PLAZA_POS.papa,
+      esAdulto: true,
+    };
+  }
+  const base = PLAZA_NINOS.find((n) => n.id === id)!;
+  return {
+    id: base.id,
+    nombre: base.nombre,
+    piel: base.piel,
+    pelo: base.peloEstilo,
+    colorPelo: base.colorPelo,
+    polera: base.polera,
+    pos: PLAZA_POS[id],
+  };
+}
 
 type Dialogo =
   | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
@@ -40,72 +95,27 @@ type Dialogo =
 
 type Crisis = "no" | "respirando" | "mensaje";
 
-function mezclar<T>(lista: T[]): T[] {
-  return [...lista].sort(() => Math.random() - 0.5);
-}
-
-export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
+export default function CalleGame3D() {
   const [avatar] = useState(() => storage.getAvatar());
   const [clinico] = useState(() => storage.getClinical());
 
-  // Herramientas del set configurado disponibles en ESTE contexto (mapa sección 7).
-  // Si ninguna del set aplica al contexto, se muestran todas las del set (no dejar al niño sin opciones).
   const ejerciciosActivos = useMemo(() => {
     const delSet = EXERCISE_LIBRARY.filter((e) => clinico.ejercicios.includes(e.id));
-    const enContexto = delSet.filter((e) => e.contextos.includes(contexto.id));
+    const enContexto = delSet.filter((e) => e.contextos.includes("calle"));
     return enContexto.length > 0 ? enContexto : delSet;
-  }, [clinico, contexto]);
+  }, [clinico]);
 
-  // compresión horizontal según proporción de la pantalla (1 = escritorio)
-  const [escalaX, setEscalaX] = useState(1);
-  useEffect(() => {
-    const calcular = () => {
-      const aspecto = window.innerWidth / window.innerHeight;
-      setEscalaX(Math.min(1, Math.max(0.55, aspecto / 1.45)));
-    };
-    calcular();
-    window.addEventListener("resize", calcular);
-    return () => window.removeEventListener("resize", calcular);
-  }, []);
+  const [areaId, setAreaId] = useState<CalleArea>("calle");
+  const area = CALLE_AREAS[areaId];
+  const enPlaza = areaId === "plaza";
 
-  // posiciones vivas (en la Calle cambian con la migración: escenario en movimiento)
-  const [posiciones, setPosiciones] = useState<Record<string, [number, number]>>(
-    contexto.posiciones
-  );
-
-  const npcs3d = useMemo<Npc3D[]>(
-    () => [
-      ...contexto.npcs.map((c) => ({
-        id: c.id,
-        nombre: c.nombre,
-        piel: c.piel,
-        pelo: c.peloEstilo,
-        colorPelo: c.colorPelo,
-        polera: c.polera,
-        pos: [posiciones[c.id][0] * escalaX, posiciones[c.id][1]] as [number, number],
-      })),
-      {
-        id: contexto.figura.id,
-        nombre: contexto.figura.nombre,
-        piel: contexto.figura.piel,
-        pelo: contexto.figura.peloEstilo,
-        colorPelo: contexto.figura.colorPelo,
-        polera: contexto.figura.polera,
-        pos: [
-          posiciones[contexto.figura.id][0] * escalaX,
-          posiciones[contexto.figura.id][1],
-        ] as [number, number],
-        esAdulto: true,
-      },
-    ],
-    [contexto, posiciones, escalaX]
-  );
+  const idsActuales = enPlaza ? PLAZA_IDS : CALLE_IDS;
+  const lineas = enPlaza ? PLAZA_LINEAS : CALLE_LINEAS;
+  const posActuales = enPlaza ? PLAZA_POS : CALLE_POS;
 
   const [carga, setCarga] = useState<ChargeMap>({});
-  const [burbujas, setBurbujas] = useState<Record<string, EmotionId | undefined>>(
-    contexto.burbujasIniciales
-  );
-  const [objetivo, setObjetivo] = useState<[number, number]>([0, 4]);
+  const [burbujas, setBurbujas] = useState<Record<string, EmotionId | undefined>>(CALLE_BURBUJAS);
+  const [objetivo, setObjetivo] = useState<[number, number]>([0, 3.4]);
   const [dialogo, setDialogo] = useState<Dialogo | null>(null);
   const [crisis, setCrisis] = useState<Crisis>("no");
   const [faseRespiracion, setFaseRespiracion] = useState<"inhala" | "exhala">("inhala");
@@ -114,28 +124,39 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
   const [aviso, setAviso] = useState<string | null>(null);
   const [orbe, setOrbe] = useState<(Orbe & { emocion: EmotionId; nombre: string }) | null>(null);
   const [animEjercicio, setAnimEjercicio] = useState<Exercise | null>(null);
-  // audífonos: herramienta de la Calle que reduce el estímulo (4.3)
   const [audifonos, setAudifonos] = useState(false);
+  const [puertaPrompt, setPuertaPrompt] = useState<PuertaDef | null>(null);
+  const [puertaAbriendo, setPuertaAbriendo] = useState<string | null>(null);
+  const [transicion, setTransicion] = useState(false);
 
   const ultimaInteraccion = useRef(Date.now());
   const ocupadoRef = useRef(false);
-  // acción que se ejecuta cuando el personaje llega caminando a su destino
   const alLlegarRef = useRef<(() => void) | null>(null);
   const audifonosRef = useRef(false);
   audifonosRef.current = audifonos;
+  const areaRef = useRef<CalleArea>(areaId);
+  areaRef.current = areaId;
 
   const total = totalCharge(carga);
   const abrumado = total >= 75;
-  ocupadoRef.current = dialogo !== null || nubes || crisis !== "no" || animEjercicio !== null;
+  ocupadoRef.current =
+    dialogo !== null || nubes || crisis !== "no" || animEjercicio !== null || transicion || puertaPrompt !== null;
 
-  const rol = contexto.figura.rolCorto;
+  const npcs3d = useMemo<Npc3D[]>(
+    () =>
+      enPlaza
+        ? [...PLAZA_IDS, CALLE_FIGURA.id].map(plazaNpc)
+        : [...CALLE_IDS, CALLE_FIGURA.id].map(calleNpc),
+    [enPlaza]
+  );
+
+  const rol = CALLE_FIGURA.rolCorto;
 
   useEffect(() => {
     const p = storage.getProgress();
     storage.setProgress({ ...p, sesiones: p.sesiones + 1 });
   }, []);
 
-  // Crisis cuando la carga se llena (3.6)
   useEffect(() => {
     if (total >= CHARGE_MAX && crisis === "no") {
       setDialogo(null);
@@ -145,7 +166,6 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
     }
   }, [total, crisis]);
 
-  // Respiración guiada de la crisis
   useEffect(() => {
     if (crisis !== "respirando") return;
     setFaseRespiracion("inhala");
@@ -164,10 +184,10 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
     return () => clearInterval(t);
   }, [crisis]);
 
-  // Migración de burbujas por inactividad (3.2) y estímulo ambiental periódico (4.x)
   useEffect(() => {
     const intervaloMs = clinico.intervaloEventosSeg * 1000;
-    const intervaloRuidoMs = intervaloMs * contexto.factorIntervalo;
+    // la calle tiene más estímulo (bocinazos frecuentes); la plaza es más calma
+    const factorRuido = areaRef.current === "plaza" ? 1.2 : 0.5;
 
     const reloj = setInterval(() => {
       if (ocupadoRef.current) return;
@@ -175,48 +195,35 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
         ultimaInteraccion.current = Date.now();
         setBurbujas((prev) => {
           const emociones = Object.values(prev).filter(Boolean) as EmotionId[];
-          const ids = mezclar(contexto.npcs.map((c) => c.id));
+          const ids = [...idsActuales].sort(() => Math.random() - 0.5);
           const nuevas: Record<string, EmotionId | undefined> = {};
           emociones.forEach((e, i) => {
-            nuevas[ids[i]] = e;
+            if (ids[i]) nuevas[ids[i]] = e;
           });
           return nuevas;
         });
-        if (contexto.escenarioMovil) {
-          // los transeúntes cambian de lugar: el escenario se siente en movimiento (4.3)
-          setPosiciones((prev) => {
-            const ids = contexto.npcs.map((c) => c.id);
-            const lugares = mezclar(ids.map((id) => prev[id]));
-            const nuevas = { ...prev };
-            ids.forEach((id, i) => {
-              nuevas[id] = lugares[i];
-            });
-            return nuevas;
-          });
-        }
       }
     }, 1000);
 
     const ruidoTimer = setInterval(() => {
       if (ocupadoRef.current) return;
       setRuido(true);
-      setTimeout(() => setRuido(false), 1200);
-      // los audífonos amortiguan el estímulo (4.3)
+      setTimeout(() => setRuido(false), 1100);
       const protegido = audifonosRef.current;
       setCarga((c) => sumarCarga(c, "miedo", protegido ? CARGA_RUIDO / 2 : CARGA_RUIDO));
-      setAviso(
-        protegido
-          ? `${contexto.evento.aviso} Los audífonos te protegieron un poco. 🎧`
-          : contexto.evento.aviso
-      );
+      const txt =
+        areaRef.current === "plaza"
+          ? "¡Se escuchó un grito de juego fuerte!"
+          : "¡Una bocina sonó muy fuerte!";
+      setAviso(protegido ? `${txt} Los audífonos te protegieron un poco. 🎧` : txt);
       setTimeout(() => setAviso(null), 3000);
-    }, intervaloRuidoMs);
+    }, intervaloMs * factorRuido);
 
     return () => {
       clearInterval(reloj);
       clearInterval(ruidoTimer);
     };
-  }, [clinico.intervaloEventosSeg, contexto]);
+  }, [clinico.intervaloEventosSeg, idsActuales]);
 
   const marcarInteraccion = () => {
     ultimaInteraccion.current = Date.now();
@@ -226,7 +233,7 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
 
   function tocarSuelo(x: number, z: number) {
     if (ocupadoRef.current) return;
-    alLlegarRef.current = null; // caminar libre cancela el diálogo pendiente
+    alLlegarRef.current = null;
     setObjetivo([x, z]);
     marcarInteraccion();
   }
@@ -235,23 +242,39 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
     if (ocupadoRef.current) return;
     marcarInteraccion();
     const npc = npcs3d.find((n) => n.id === id)!;
-    const limiteX = 6.2 * escalaX;
-    setObjetivo([
-      Math.max(-limiteX, Math.min(limiteX, npc.pos[0] + 0.9)),
-      Math.max(contexto.zMin, Math.min(npc.pos[1] + 0.7, 4.4)),
-    ]);
+    setObjetivo([Math.max(-8, Math.min(8, npc.pos[0] + 0.9)), Math.min(npc.pos[1] + 0.7, 4)]);
     const emocion = burbujas[id];
-    // el diálogo se abre recién cuando el personaje llega caminando al NPC
     alLlegarRef.current = () => {
-      if (id === contexto.figura.id) {
-        setDialogo({ tipo: "figura-apertura" });
-      } else if (emocion) {
-        setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
-      } else {
-        setAviso(`${npc.nombre} dice: «¡Hola! ¿Cómo estás hoy?»`);
+      if (id === CALLE_FIGURA.id) setDialogo({ tipo: "figura-apertura" });
+      else if (emocion) setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
+      else {
+        setAviso(`${npc.nombre} dice: «¡Hola! ¿Jugamos un rato?»`);
         setTimeout(() => setAviso(null), 2500);
       }
     };
+  }
+
+  function tocarPuerta(p: PuertaDef) {
+    if (ocupadoRef.current) return;
+    marcarInteraccion();
+    setObjetivo(p.aprox);
+    alLlegarRef.current = () => setPuertaPrompt(p);
+  }
+
+  function abrirPuerta() {
+    const p = puertaPrompt;
+    if (!p) return;
+    setPuertaPrompt(null);
+    setPuertaAbriendo(p.id);
+    setTransicion(true);
+    setTimeout(() => {
+      const dest = CALLE_AREAS[p.destino];
+      setBurbujas(dest.id === "plaza" ? { ...PLAZA_BURBUJAS } : { ...CALLE_BURBUJAS });
+      setAreaId(dest.id);
+      setObjetivo(dest.entrada);
+      setPuertaAbriendo(null);
+    }, 650);
+    setTimeout(() => setTransicion(false), 1050);
   }
 
   function llegoAlDestino() {
@@ -263,29 +286,21 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
   function escucharNpc(npcId: string, nombre: string, emocion: EmotionId) {
     setDialogo(null);
     setBurbujas((b) => ({ ...b, [npcId]: undefined }));
-    // reaparece otra burbuja más tarde, manteniendo la mezcla (5.2)
     setTimeout(() => {
       setBurbujas((prev) => {
-        const libres = contexto.npcs.filter((c) => !prev[c.id]);
+        const libres = idsActuales.filter((id) => !prev[id]);
         if (libres.length === 0) return prev;
         const elegido = libres[Math.floor(Math.random() * libres.length)];
         const pool: EmotionId[] =
           Math.random() < 0.55 ? DISPLACENTERAS : (["alegria", "calma"] as EmotionId[]);
-        return { ...prev, [elegido.id]: pool[Math.floor(Math.random() * pool.length)] };
+        return { ...prev, [elegido]: pool[Math.floor(Math.random() * pool.length)] };
       });
     }, RESPAWN_BURBUJA_MS);
 
     const info = EMOTIONS[emocion];
     if (info.displacentera) {
-      // el color viaja en 3D hasta la guatita (3.3)
-      const pos = posiciones[npcId];
-      setOrbe({
-        key: Date.now(),
-        color: info.color,
-        desde: [pos[0] * escalaX, 1.8, pos[1]],
-        emocion,
-        nombre,
-      });
+      const pos = posActuales[npcId];
+      setOrbe({ key: Date.now(), color: info.color, desde: [pos[0], 1.8, pos[1]], emocion, nombre });
     } else if (emocion === "calma") {
       setCarga((c) => reducirTotal(c, ALIVIO_AMIGO_CALMA));
       setAviso("Estar con alguien tranquilo ayudó un poquito a tu cuerpo. 💚");
@@ -305,7 +320,6 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
     setOrbe(null);
   }
 
-  // Figura de apoyo: baja fuerte pero NO a cero (salvaguarda 5.3)
   function contarALaFigura(emocion: EmotionId) {
     setDialogo(null);
     setNubes(true);
@@ -325,12 +339,8 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
   function hacerEjercicio(ej: Exercise) {
     setDialogo(null);
     setAnimEjercicio(ej);
-    // el personaje ejecuta la animación del ejercicio en la escena 3D
     setTimeout(() => {
       setAnimEjercicio(null);
-      // El juego modela hiperactivación: los ejercicios calmantes regulan de
-      // lleno; los alertantes (vestibular intenso) descargan menos y, si la
-      // carga ya está alta, lo enseñan (documento clínico, regla de seguridad B).
       if (ej.estado === "subir") {
         setCarga((c) => reducirTotal(c, ALIVIO_EJERCICIO * 0.4));
         if (totalCharge(carga) >= 60) {
@@ -342,7 +352,7 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
       } else {
         setCarga((c) => reducirTotal(c, ALIVIO_EJERCICIO));
       }
-      setDialogo({ tipo: "puente", ejercicio: ej }); // puente juego → vida real (3.5)
+      setDialogo({ tipo: "puente", ejercicio: ej });
     }, 3200);
   }
 
@@ -352,10 +362,7 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
       const p = storage.getProgress();
       storage.setProgress({
         ...p,
-        hechosEnVidaReal: {
-          ...p.hechosEnVidaReal,
-          [ej.id]: (p.hechosEnVidaReal[ej.id] ?? 0) + 1,
-        },
+        hechosEnVidaReal: { ...p.hechosEnVidaReal, [ej.id]: (p.hechosEnVidaReal[ej.id] ?? 0) + 1 },
       });
       setAviso("🌟 ¡Eso! Practicar de verdad hace tu calma más fuerte.");
     } else {
@@ -371,27 +378,28 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
   }
 
   const emocionesAcumuladas = DISPLACENTERAS.filter((id) => (carga[id] ?? 0) >= 4);
+  const mostrarEtiquetas = !ocupadoRef.current;
 
   // ---------- render ----------
 
   return (
-    <div className={`escena-envoltorio escena-${contexto.id}`}>
-      <ContextScene
-        entorno={contexto.id}
+    <div className="escena-envoltorio escena-calle">
+      <CalleScene
+        area={area}
         avatar={avatar}
         charge={carga}
         abrumado={abrumado}
+        animacionEjercicio={animEjercicio?.animacion ?? null}
+        audifonos={audifonos}
         npcs={npcs3d}
         burbujas={burbujas}
         objetivo={objetivo}
         orbe={orbe}
-        escalaX={escalaX}
-        animacionEjercicio={animEjercicio?.animacion ?? null}
-        audifonos={audifonos}
-        zMin={contexto.zMin}
-        mostrarEtiquetas={dialogo === null && !nubes && crisis === "no" && animEjercicio === null}
+        mostrarEtiquetas={mostrarEtiquetas}
+        puertaAbriendo={puertaAbriendo}
         onSuelo={tocarSuelo}
         onNpc={tocarNpc}
+        onPuerta={tocarPuerta}
         onOrbeLlega={llegoOrbe}
         onLlegada={llegoAlDestino}
       />
@@ -399,6 +407,8 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
       <Link href="/" className="salir-enlace">
         ← Salir
       </Link>
+
+      <div className="area-rotulo">{area.nombre}</div>
 
       <div className="hud">
         <button
@@ -412,24 +422,21 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
         >
           🧰 Mis herramientas
         </button>
-        {contexto.conAudifonos && (
-          <button
-            className="hud-boton"
-            style={audifonos ? { background: "var(--verde)", color: "white" } : undefined}
-            onClick={() => {
-              marcarInteraccion();
-              setAudifonos((a) => !a);
-              setAviso(
-                audifonos
-                  ? "Te quitaste los audífonos."
-                  : "🎧 Audífonos puestos: los ruidos fuertes molestarán menos."
-              );
-              setTimeout(() => setAviso(null), 3000);
-            }}
-          >
-            🎧 Audífonos {audifonos ? "✓" : ""}
-          </button>
-        )}
+        <button
+          className="hud-boton"
+          style={audifonos ? { background: "var(--verde)", color: "white" } : undefined}
+          onClick={() => {
+            setAudifonos((a) => !a);
+            setAviso(
+              audifonos
+                ? "Te quitaste los audífonos."
+                : "🎧 Audífonos puestos: los ruidos fuertes molestarán menos."
+            );
+            setTimeout(() => setAviso(null), 3000);
+          }}
+        >
+          🎧 {audifonos ? "✓" : ""}
+        </button>
       </div>
 
       {abrumado && crisis === "no" && !aviso && (
@@ -443,9 +450,8 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
         </div>
       )}
 
-      {ruido && <div className="ruido-fuerte">{contexto.evento.titulo}</div>}
+      {ruido && <div className="ruido-fuerte">📢 ¡RUIDO FUERTE!</div>}
 
-      {/* banner no bloqueante: deja ver la animación del personaje en la escena */}
       {animEjercicio && (
         <div className="banner-ejercicio">
           <span style={{ fontSize: "1.8rem" }}>{animEjercicio.emoji}</span>
@@ -455,11 +461,26 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
         </div>
       )}
 
+      {puertaPrompt && (
+        <div className="velo">
+          <div className="dialogo">
+            <span className="dialogo-hablante">🚪 Acceso</span>
+            <p className="dialogo-texto">¿Quieres entrar?</p>
+            <button className="boton verde" onClick={abrirPuerta}>
+              {puertaPrompt.label}
+            </button>
+            <button className="boton secundario" onClick={() => setPuertaPrompt(null)}>
+              Ahora no
+            </button>
+          </div>
+        </div>
+      )}
+
       {dialogo?.tipo === "npc" && (
         <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.nombre}</span>
-            <p className="dialogo-texto">«{contexto.lineas[dialogo.emocion]}»</p>
+            <p className="dialogo-texto">«{lineas[dialogo.emocion]}»</p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}
@@ -474,7 +495,7 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
       {dialogo?.tipo === "figura-apertura" && (
         <div className="velo">
           <div className="dialogo">
-            <span className="dialogo-hablante">{contexto.figura.nombre}</span>
+            <span className="dialogo-hablante">{CALLE_FIGURA.nombre}</span>
             <p className="dialogo-texto">«¿En qué te puedo ayudar hoy?»</p>
             {emocionesAcumuladas.length === 0 ? (
               <>
@@ -482,7 +503,7 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
                   Tu cuerpo está tranquilo ahora mismo.
                 </p>
                 <button className="boton verde" onClick={() => setDialogo(null)}>
-                  «¡Solo quería saludarte!»
+                  «¡Solo quería tomarte la mano!»
                 </button>
               </>
             ) : (
@@ -567,6 +588,12 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
         </div>
       )}
 
+      {transicion && (
+        <div className="transicion-puerta">
+          <p>Entrando…</p>
+        </div>
+      )}
+
       {crisis !== "no" && (
         <div className="nubes" style={{ flexDirection: "column", gap: 24, padding: 24 }}>
           {crisis === "respirando" ? (
@@ -574,7 +601,7 @@ export default function ContextGame3D({ contexto }: { contexto: ContextDef }) {
               <p style={{ fontSize: "1.35rem", fontWeight: 800, color: "#4a6e8a", textAlign: "center", margin: 0 }}>
                 Tu cuerpo se llenó demasiado y necesita una pausa.
                 <br />
-                {contexto.figura.frasePresencia} Respiremos juntos.
+                {CALLE_FIGURA.frasePresencia} Respiremos juntos.
               </p>
               <div className="respiracion-circulo" />
               <p style={{ fontSize: "1.6rem", fontWeight: 800, color: "#357fb0", margin: 0 }}>

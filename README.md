@@ -27,7 +27,7 @@ npm run build    # build de producción
 | `/avatar` | Editor del personaje (piel, pelo, polera) con vista previa 3D |
 | `/escuela` | Contexto Escuela **explorable**: sala de clases (compañeros + profe) con puerta que se abre a un patio amplio (cancha, baños, mesas de ping pong, palmeras, cancha de vóleibol) |
 | `/casa` | Contexto Casa **explorable**: casa de un piso con living, patio (perro, gato, alimentar), pasillos y habitaciones conectados por puertas que se abren |
-| `/calle` | Contexto Calle (4.3): transeúntes que cambian de lugar, autos cruzando, bocinazos más frecuentes, papá que acompaña y audífonos que reducen el estímulo |
+| `/calle` | Contexto Calle **explorable**: la calle (autos, transeúntes, audífonos) con acceso a una **plaza/parque** (caminito con árboles a los lados, sector de juegos con columpios, inflable y resbalín, y niños jugando) |
 | `/terapia` | Contexto Terapia **explorable**: patio con reja → recepción (pacientes + psicólogo de apoyo) → salas de Psicología, Fonoaudiología y Terapia Ocupacional, cada una con su terapeuta y objetos (sillones/juguetes, teléfono de juguete/ventana, columpio/trampolín/plasticinas/bloques) |
 | `/escuela-2d` | La misma mecánica en la escena 2D original, conservada para comparar en validaciones |
 | `/clinico` | Config rápida del dispositivo: set de reguladores (5.4) y ritmo de eventos |
