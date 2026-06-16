@@ -48,6 +48,8 @@ interface SceneProps {
   puertaAbriendo: string | null;
   /** comida servida al perro */
   perroAlimentado: boolean;
+  /** comida servida al gato */
+  gatoAlimentado: boolean;
   onSuelo: (x: number, z: number) => void;
   onNpc: (id: string) => void;
   onPuerta: (p: PuertaDef) => void;
@@ -386,10 +388,24 @@ function Perro({
   );
 }
 
-function Gato({ pos, onTap }: { pos: [number, number]; onTap: () => void }) {
+function Gato({
+  pos,
+  alimentado,
+  onTap,
+}: {
+  pos: [number, number];
+  alimentado: boolean;
+  onTap: () => void;
+}) {
+  const grupo = useRef<THREE.Group>(null);
   const cola = useRef<THREE.Group>(null);
-  useFrame((state) => {
-    if (cola.current) cola.current.rotation.x = Math.sin(state.clock.elapsedTime * 2) * 0.4 - 0.4;
+  useFrame((state, delta) => {
+    const t = state.clock.elapsedTime;
+    // si comió, baja la cabeza hacia el tazón; si no, cola tranquila
+    if (grupo.current) {
+      grupo.current.rotation.x = THREE.MathUtils.damp(grupo.current.rotation.x, alimentado ? 0.45 : 0, 5, delta);
+    }
+    if (cola.current) cola.current.rotation.x = Math.sin(t * (alimentado ? 6 : 2)) * 0.4 - 0.4;
   });
   return (
     <group
@@ -399,6 +415,7 @@ function Gato({ pos, onTap }: { pos: [number, number]; onTap: () => void }) {
         onTap();
       }}
     >
+      <group ref={grupo}>
       <mesh position={[0, 0.3, 0]}>
         <capsuleGeometry args={[0.18, 0.34, 4, 8]} />
         <meshStandardMaterial color="#8a8a8a" flatShading />
@@ -428,6 +445,7 @@ function Gato({ pos, onTap }: { pos: [number, number]; onTap: () => void }) {
           <cylinderGeometry args={[0.04, 0.03, 0.42, 6]} />
           <meshStandardMaterial color="#8a8a8a" flatShading />
         </mesh>
+      </group>
       </group>
     </group>
   );
@@ -747,6 +765,7 @@ export default function CasaScene({
   mostrarEtiquetas,
   puertaAbriendo,
   perroAlimentado,
+  gatoAlimentado,
   onSuelo,
   onNpc,
   onPuerta,
@@ -805,9 +824,11 @@ export default function CasaScene({
       {area.id === "patio" && (
         <>
           <Perro pos={[-1.4, -1]} alimentado={perroAlimentado} onTap={() => onMascota("perro")} />
-          <Gato pos={[2.4, -0.4]} onTap={() => onMascota("gato")} />
+          <Gato pos={[2.4, -0.4]} alimentado={gatoAlimentado} onTap={() => onMascota("gato")} />
           <Tazon pos={[-2.4, 0.2]} color="#b5793f" lleno={perroAlimentado} />
           <Tazon pos={[-1.7, 0.4]} color="#4a9fd6" lleno />
+          {/* tazón de comida del gato */}
+          <Tazon pos={[2.4, 0.5]} color="#c98f3d" lleno={gatoAlimentado} />
           {mostrarEtiquetas && (
             <Html position={[-1.4, 2, -1]} center distanceFactor={factorEtiqueta} zIndexRange={[12, 0]}
               style={{ pointerEvents: "none", textAlign: "center" }}>

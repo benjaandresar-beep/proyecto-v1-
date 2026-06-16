@@ -71,7 +71,8 @@ type Dialogo =
   | { tipo: "figura-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise }
-  | { tipo: "perro" };
+  | { tipo: "perro" }
+  | { tipo: "gato" };
 
 type Crisis = "no" | "respirando" | "mensaje";
 
@@ -102,6 +103,7 @@ export default function CasaGame3D() {
   const [audifonos, setAudifonos] = useState(false);
   const [tieneAudifonos, setTieneAudifonos] = useState(false);
   const [perroAlimentado, setPerroAlimentado] = useState(false);
+  const [gatoAlimentado, setGatoAlimentado] = useState(false);
   // navegación de puertas
   const [puertaPrompt, setPuertaPrompt] = useState<PuertaDef | null>(null);
   const [puertaAbriendo, setPuertaAbriendo] = useState<string | null>(null);
@@ -258,8 +260,8 @@ export default function CasaGame3D() {
       setObjetivo([-1.4, 0.6]);
       alLlegarRef.current = () => setDialogo({ tipo: "perro" });
     } else {
-      setAviso("El gato te mira, hace «miau» y se estira tranquilo. 🐱");
-      setTimeout(() => setAviso(null), 3000);
+      setObjetivo([2.4, 0.8]);
+      alLlegarRef.current = () => setDialogo({ tipo: "gato" });
     }
   }
 
@@ -268,6 +270,14 @@ export default function CasaGame3D() {
     setPerroAlimentado(true);
     setCarga((c) => reducirTotal(c, 6)); // cuidar a la mascota calma un poco
     setAviso("Le serviste comida. ¡Firulais mueve la cola feliz! 🐶🦴");
+    setTimeout(() => setAviso(null), 3500);
+  }
+
+  function alimentarGato() {
+    setDialogo(null);
+    setGatoAlimentado(true);
+    setCarga((c) => reducirTotal(c, 6));
+    setAviso("Le serviste comida. ¡Michi ronronea feliz! 🐱🐟");
     setTimeout(() => setAviso(null), 3500);
   }
 
@@ -406,6 +416,7 @@ export default function CasaGame3D() {
         mostrarEtiquetas={mostrarEtiquetas}
         puertaAbriendo={puertaAbriendo}
         perroAlimentado={perroAlimentado}
+        gatoAlimentado={gatoAlimentado}
         onSuelo={tocarSuelo}
         onNpc={tocarNpc}
         onPuerta={tocarPuerta}
@@ -499,6 +510,27 @@ export default function CasaGame3D() {
             ) : (
               <p style={{ color: "var(--tinta-suave)", margin: 0 }}>
                 Firulais ya comió y está feliz, moviendo la cola.
+              </p>
+            )}
+            <button className="boton secundario" onClick={() => setDialogo(null)}>
+              Volver
+            </button>
+          </div>
+        </div>
+      )}
+
+      {dialogo?.tipo === "gato" && (
+        <div className="velo">
+          <div className="dialogo">
+            <span className="dialogo-hablante">🐱 Michi</span>
+            <p className="dialogo-texto">«¡Miau!»</p>
+            {!gatoAlimentado ? (
+              <button className="boton verde" onClick={alimentarGato}>
+                🐟 Alimentar al gato
+              </button>
+            ) : (
+              <p style={{ color: "var(--tinta-suave)", margin: 0 }}>
+                Michi ya comió y ronronea contento.
               </p>
             )}
             <button className="boton secundario" onClick={() => setDialogo(null)}>
