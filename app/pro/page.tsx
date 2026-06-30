@@ -1,10 +1,5 @@
 "use client";
 
-// Lado profesional mínimo (sección 6 de la spec): casos por código, ficha →
-// perfil, configuración del juego (5.4), clave que abre solo el juego (6.4) y
-// guía para el hogar con revisión editable obligatoria por bloques (5.5 / 6.3).
-// Prototipo sin servidor: todo vive en localStorage de ESTE dispositivo.
-
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -37,18 +32,52 @@ const PROFESIONES = [
 const SENSORIALES = [
   { id: "buscador", nombre: "Buscador", ayuda: "se regula con movimiento e input fuerte" },
   { id: "evitador", nombre: "Evitador", ayuda: "se sobrecarga con estímulos intensos" },
-  { id: "mixto", nombre: "Mixto", ayuda: "combina búsqueda y evitación" },
+  { id: "mixto",    nombre: "Mixto",    ayuda: "combina búsqueda y evitación" },
 ] as const;
 
 type Vista = "casos" | "caso" | "guiaFinal";
 
+/* ===== Barra superior ===== */
+function ProTopbar({
+  cuenta,
+  onLogout,
+}: {
+  cuenta: CuentaPro;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="pro-topbar">
+      <div className="pro-marca">
+        <span className="pro-marca-nombre">Mi Calma</span>
+        <span className="pro-marca-tag">Acceso profesional</span>
+      </div>
+      <div className="pro-usuario">
+        <strong>{cuenta.nombre}</strong>
+        {cuenta.profesion}
+        <br />
+        <button
+          onClick={onLogout}
+          style={{
+            background: "none", border: "none", color: "rgba(255,255,255,0.75)",
+            cursor: "pointer", fontSize: "0.78rem", padding: 0, marginTop: 2,
+            fontFamily: "inherit",
+          }}
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ===== Componente principal ===== */
 export default function LadoProfesional() {
-  const [cargado, setCargado] = useState(false);
-  const [cuenta, setCuenta] = useState<CuentaPro | null>(null);
-  const [sesion, setSesion] = useState(false);
-  const [casos, setCasos] = useState<Caso[]>([]);
-  const [vista, setVista] = useState<Vista>("casos");
-  const [casoId, setCasoId] = useState<string | null>(null);
+  const [cargado, setCargado]       = useState(false);
+  const [cuenta, setCuenta]         = useState<CuentaPro | null>(null);
+  const [sesion, setSesion]         = useState(false);
+  const [casos, setCasos]           = useState<Caso[]>([]);
+  const [vista, setVista]           = useState<Vista>("casos");
+  const [casoId, setCasoId]         = useState<string | null>(null);
   const [avisoCopia, setAvisoCopia] = useState(false);
 
   useEffect(() => {
@@ -62,15 +91,18 @@ export default function LadoProfesional() {
     if (cargado) proStorage.setCasos(casos);
   }, [casos, cargado]);
 
-  const caso = useMemo(() => casos.find((c) => c.id === casoId) ?? null, [casos, casoId]);
+  const caso = useMemo(
+    () => casos.find((c) => c.id === casoId) ?? null,
+    [casos, casoId]
+  );
 
   function actualizarCaso(id: string, cambio: Partial<Caso>) {
-    setCasos((prev) => prev.map((c) => (c.id === id ? { ...c, ...cambio } : c)));
+    setCasos((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...cambio } : c))
+    );
   }
 
   if (!cargado) return null;
-
-  // ---------- registro / login ----------
 
   if (!cuenta) {
     return (
@@ -97,601 +129,712 @@ export default function LadoProfesional() {
     );
   }
 
-  // ---------- vista: guía final imprimible ----------
-
+  /* ---- Vista: guía final imprimible ---- */
   if (vista === "guiaFinal" && caso?.guia) {
     const confirmados = caso.guia.bloques.filter((b) => b.estado === "confirmado");
     return (
-      <main className="pantalla">
-        <div className="fila-botones no-print">
-          <button className="boton secundario" onClick={() => setVista("caso")}>
-            ← Volver al caso
-          </button>
-          <button className="boton" onClick={() => window.print()}>
-            🖨 Imprimir / Exportar
-          </button>
-        </div>
-        <div className="tarjeta imprimible">
-          <h1 className="titulo" style={{ textAlign: "left" }}>
-            Guía para el hogar
-          </h1>
-          <p style={{ color: "var(--tinta-suave)", margin: "4px 0 18px" }}>
-            Caso {caso.codigo} ·{" "}
-            {new Date(caso.guia.generadaEl ?? Date.now()).toLocaleDateString("es-CL")}
-          </p>
-          {confirmados.map((b) => (
-            <section key={b.id} style={{ marginBottom: 18 }}>
-              <h2 style={{ fontSize: "1.15rem", margin: "0 0 6px" }}>{b.titulo}</h2>
-              <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{b.texto}</p>
-            </section>
-          ))}
-          <hr style={{ border: "none", borderTop: "1px solid var(--borde)", margin: "20px 0 10px" }} />
-          <p style={{ fontSize: "0.85rem", color: "var(--tinta-suave)", margin: 0 }}>
-            Esta guía fue elaborada por {cuenta.nombre} ({cuenta.profesion}, N° de registro{" "}
-            {cuenta.registro}) con apoyo de una herramienta de redacción, y fue revisada y validada
-            bloque a bloque por el/la profesional, quien responde por su contenido.
-          </p>
+      <main className="pantalla-pro">
+        <ProTopbar cuenta={cuenta} onLogout={() => { proStorage.setSesion(false); setSesion(false); }} />
+        <div className="pro-contenido">
+          <div className="fila-botones no-print">
+            <button className="boton secundario" onClick={() => setVista("caso")}>
+              ← Volver al caso
+            </button>
+            <button className="boton boton-pro" onClick={() => window.print()}>
+              🖨 Imprimir / Exportar
+            </button>
+          </div>
+
+          <div className="pro-seccion imprimible">
+            <div className="pro-seccion-cab">
+              <span className="pro-seccion-icono">📄</span>
+              <h2 className="pro-seccion-titulo">Guía para el hogar — Caso {caso.codigo}</h2>
+            </div>
+            <div className="pro-seccion-cuerpo">
+              <p style={{ color: "var(--pro-meta)", fontSize: "0.88rem", margin: 0 }}>
+                Generada el{" "}
+                {new Date(caso.guia.generadaEl ?? Date.now()).toLocaleDateString("es-CL")}
+              </p>
+              {confirmados.map((b) => (
+                <section key={b.id} style={{ marginBottom: 16 }}>
+                  <h3 style={{ fontSize: "1rem", margin: "0 0 6px", color: "var(--pro-texto)" }}>
+                    {b.titulo}
+                  </h3>
+                  <p style={{ whiteSpace: "pre-wrap", margin: 0, color: "var(--pro-meta)", fontSize: "0.95rem" }}>
+                    {b.texto}
+                  </p>
+                </section>
+              ))}
+              <hr style={{ border: "none", borderTop: "1px solid var(--pro-borde)", margin: "16px 0 10px" }} />
+              <p style={{ fontSize: "0.82rem", color: "var(--pro-meta)", margin: 0 }}>
+                Elaborada por {cuenta.nombre} ({cuenta.profesion}, N° reg. {cuenta.registro}) con
+                apoyo de una herramienta de redacción, revisada y validada bloque a bloque por
+                el/la profesional, quien responde por su contenido.
+              </p>
+            </div>
+          </div>
         </div>
       </main>
     );
   }
 
-  // ---------- vista: caso ----------
-
+  /* ---- Vista: caso ---- */
   if (vista === "caso" && caso) {
-    const bloques = caso.guia?.bloques ?? [];
+    const bloques    = caso.guia?.bloques ?? [];
     const pendientes = bloques.filter((b) => b.estado === "pendiente").length;
-    const confirmados = bloques.filter((b) => b.estado === "confirmado").length;
-    const puedeGenerar = bloques.length > 0 && pendientes === 0 && confirmados > 0;
+    const confirmadosCnt = bloques.filter((b) => b.estado === "confirmado").length;
+    const puedeGenerar   = bloques.length > 0 && pendientes === 0 && confirmadosCnt > 0;
 
     return (
-      <main className="pantalla">
-        <button className="boton secundario" onClick={() => setVista("casos")}>
-          ← Mis casos
-        </button>
-        <h1 className="titulo">Caso {caso.codigo}</h1>
+      <main className="pantalla-pro">
+        <ProTopbar cuenta={cuenta} onLogout={() => { proStorage.setSesion(false); setSesion(false); }} />
+        <div className="pro-contenido">
 
-        {/* ----- ficha clínica → perfil (6.2) ----- */}
-        <div className="tarjeta">
-          <strong>Ficha del caso</strong>
-          <label className="campo">
-            Código del caso (sin nombre real)
-            <input
-              value={caso.codigo}
-              onChange={(e) => actualizarCaso(caso.id, { codigo: e.target.value })}
-            />
-          </label>
-
-          <span className="campo-titulo">Diagnóstico(s) — etiquetas que precargan sugerencias</span>
-          <div className="muestrario">
-            {DIAGNOSTICOS.map((d) => (
+          {/* Cabecera */}
+          <div className="pro-page-header">
+            <div>
               <button
-                key={d}
-                className={`muestra-opcion ${caso.diagnosticos.includes(d) ? "activa" : ""}`}
-                onClick={() =>
-                  actualizarCaso(caso.id, {
-                    diagnosticos: caso.diagnosticos.includes(d)
-                      ? caso.diagnosticos.filter((x) => x !== d)
-                      : [...caso.diagnosticos, d],
-                  })
-                }
+                onClick={() => setVista("casos")}
+                style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "var(--pro-meta)", fontSize: "0.85rem",
+                  fontFamily: "inherit", padding: "0 0 6px",
+                  display: "flex", alignItems: "center", gap: 4,
+                }}
               >
-                {d}
+                ← Mis casos
               </button>
-            ))}
+              <h1 className="pro-page-titulo">Caso {caso.codigo}</h1>
+            </div>
           </div>
 
-          <span className="campo-titulo">Perfil sensorial (clave para el set de ejercicios, 5.4)</span>
-          <div className="muestrario">
-            {SENSORIALES.map((s) => (
-              <button
-                key={s.id}
-                className={`muestra-opcion ${caso.perfilSensorial === s.id ? "activa" : ""}`}
-                title={s.ayuda}
-                onClick={() => actualizarCaso(caso.id, { perfilSensorial: s.id })}
-              >
-                {s.nombre}
-              </button>
-            ))}
-          </div>
+          {/* Ficha clínica */}
+          <div className="pro-seccion">
+            <div className="pro-seccion-cab">
+              <span className="pro-seccion-icono">📋</span>
+              <h2 className="pro-seccion-titulo">Ficha del caso</h2>
+            </div>
+            <div className="pro-seccion-cuerpo">
+              <label className="campo">
+                Código del caso (sin nombre real)
+                <input
+                  value={caso.codigo}
+                  onChange={(e) => actualizarCaso(caso.id, { codigo: e.target.value })}
+                />
+              </label>
 
-          <span className="campo-titulo">Patrones conductuales/emocionales frecuentes</span>
-          {RASGOS.map((r) => (
-            <label key={r.id} className="fila-check">
-              <input
-                type="checkbox"
-                checked={caso.rasgos.includes(r.id)}
-                onChange={() =>
-                  actualizarCaso(caso.id, {
-                    rasgos: caso.rasgos.includes(r.id)
-                      ? caso.rasgos.filter((x) => x !== r.id)
-                      : [...caso.rasgos, r.id],
-                  })
-                }
-              />
-              {r.etiqueta}
-            </label>
-          ))}
-
-          <label className="campo">
-            Fortalezas e intereses (texto libre)
-            <textarea
-              rows={2}
-              value={caso.fortalezas}
-              onChange={(e) => actualizarCaso(caso.id, { fortalezas: e.target.value })}
-            />
-          </label>
-          <label className="campo">
-            Forma actual / momento del NNA (texto libre)
-            <textarea
-              rows={2}
-              value={caso.formaActual}
-              onChange={(e) => actualizarCaso(caso.id, { formaActual: e.target.value })}
-            />
-          </label>
-          <label className="campo">
-            Observaciones del profesional (no se incluyen en la guía)
-            <textarea
-              rows={2}
-              value={caso.observaciones}
-              onChange={(e) => actualizarCaso(caso.id, { observaciones: e.target.value })}
-            />
-          </label>
-        </div>
-
-        {/* ----- configuración del juego (5.4) + clave (6.4) ----- */}
-        <div className="tarjeta">
-          <strong>Juego: set de reguladores del caso</strong>
-          <p className="ayuda">
-            Biblioteca por mecanismo (familias A–E), no por diagnóstico. El input intenso regula a un
-            perfil buscador pero puede sobrecargar a uno hipersensible. La sugerencia sigue el árbol
-            de decisión: base segura (A + C) para todos, vestibular intenso (B) solo para buscadores.
-          </p>
-          <button
-            className="boton secundario"
-            onClick={() => {
-              // Árbol de decisión (sección 8): base segura A+C siempre; B intenso solo en buscador;
-              // E (reductores) prioritario en evitador.
-              const sugerido = EXERCISE_LIBRARY.filter((e) => {
-                const baseSegura =
-                  (e.familia === "propioceptivo" || e.familia === "respiratorio") &&
-                  e.seguridad === "transversal";
-                const cognitivosUtiles = e.familia === "cognitivo";
-                if (caso.perfilSensorial === "buscador") {
-                  // puede descargar con vestibular intenso
-                  return baseSegura || cognitivosUtiles || e.familia === "vestibular";
-                }
-                if (caso.perfilSensorial === "evitador") {
-                  // sin vestibular intenso; suma reductores sensoriales
-                  return (
-                    baseSegura ||
-                    cognitivosUtiles ||
-                    e.familia === "sensorial" ||
-                    (e.familia === "vestibular" && e.seguridad === "transversal")
-                  );
-                }
-                // mixto: todo lo seguro transversal + cognitivos + reductores
-                return e.seguridad === "transversal" || cognitivosUtiles;
-              }).map((e) => e.id);
-              actualizarCaso(caso.id, { ejercicios: sugerido });
-            }}
-          >
-            ✨ Sugerir set según perfil sensorial ({caso.perfilSensorial})
-          </button>
-          {ORDEN_FAMILIAS.map((fam) => {
-            const ejercicios = EXERCISE_LIBRARY.filter((e) => e.familia === fam);
-            const info = FAMILIAS[fam];
-            return (
-              <div key={fam} style={{ marginTop: 12 }}>
-                <div style={{ fontWeight: 800, fontSize: "0.9rem" }}>
-                  Familia {info.letra} · {info.nombre}
+              <div>
+                <span className="campo-titulo">Diagnóstico(s)</span>
+                <div className="muestrario">
+                  {DIAGNOSTICOS.map((d) => (
+                    <button
+                      key={d}
+                      className={`muestra-opcion ${caso.diagnosticos.includes(d) ? "activa" : ""}`}
+                      onClick={() =>
+                        actualizarCaso(caso.id, {
+                          diagnosticos: caso.diagnosticos.includes(d)
+                            ? caso.diagnosticos.filter((x) => x !== d)
+                            : [...caso.diagnosticos, d],
+                        })
+                      }
+                    >
+                      {d}
+                    </button>
+                  ))}
                 </div>
-                {ejercicios.map((ej) => (
-                  <label key={ej.id} className="fila-check">
+              </div>
+
+              <div>
+                <span className="campo-titulo">Perfil sensorial</span>
+                <div className="muestrario">
+                  {SENSORIALES.map((s) => (
+                    <button
+                      key={s.id}
+                      className={`muestra-opcion ${caso.perfilSensorial === s.id ? "activa" : ""}`}
+                      title={s.ayuda}
+                      onClick={() => actualizarCaso(caso.id, { perfilSensorial: s.id })}
+                    >
+                      {s.nombre}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="campo-titulo">Patrones conductuales/emocionales frecuentes</span>
+                {RASGOS.map((r) => (
+                  <label key={r.id} className="fila-check">
                     <input
                       type="checkbox"
-                      checked={caso.ejercicios.includes(ej.id)}
+                      checked={caso.rasgos.includes(r.id)}
                       onChange={() =>
                         actualizarCaso(caso.id, {
-                          ejercicios: caso.ejercicios.includes(ej.id)
-                            ? caso.ejercicios.filter((x) => x !== ej.id)
-                            : [...caso.ejercicios, ej.id],
+                          rasgos: caso.rasgos.includes(r.id)
+                            ? caso.rasgos.filter((x) => x !== r.id)
+                            : [...caso.rasgos, r.id],
                         })
                       }
                     />
-                    <span style={{ fontSize: "1.1rem" }}>{ej.emoji}</span>
-                    <span style={{ flex: 1 }}>{ej.nombre}</span>
-                    <span className={`chip-seg ${ej.seguridad}`}>
-                      {ej.seguridad === "precaucion" ? "precaución" : "seguro"}
-                    </span>
+                    {r.etiqueta}
                   </label>
                 ))}
               </div>
-            );
-          })}
 
-          <span className="campo-titulo">Clave de acceso al juego</span>
-          <p className="ayuda">
-            La clave abre ÚNICAMENTE el juego (avatar y ejercicios configurados). Nunca abre el
-            sistema, la ficha ni la guía. La familia solo juega. Es revocable.
-          </p>
-          {caso.clave ? (
-            <>
-              <code className="clave-juego">{caso.clave}</code>
-              <div className="fila-botones">
-                <button
-                  className="boton secundario"
-                  onClick={() => {
-                    navigator.clipboard?.writeText(caso.clave!);
-                    setAvisoCopia(true);
-                    setTimeout(() => setAvisoCopia(false), 2000);
-                  }}
-                >
-                  {avisoCopia ? "✓ Copiada" : "Copiar"}
-                </button>
-                <button
-                  className="boton secundario"
-                  onClick={() => actualizarCaso(caso.id, { clave: generarClave() })}
-                >
-                  Regenerar
-                </button>
-                <button
-                  className="boton secundario"
-                  style={{ color: "var(--rojo)" }}
-                  onClick={() => actualizarCaso(caso.id, { clave: null })}
-                >
-                  Revocar
-                </button>
-              </div>
-            </>
-          ) : (
-            <button
-              className="boton"
-              onClick={() => actualizarCaso(caso.id, { clave: generarClave() })}
-            >
-              🔑 Generar clave del juego
-            </button>
-          )}
-          <button
-            className="boton verde"
-            onClick={() => {
-              storage.setClinical({ ...storage.getClinical(), ejercicios: caso.ejercicios });
-              alert(
-                "Set de ejercicios aplicado al juego de este dispositivo (en el producto final, la clave lleva esta configuración al dispositivo de la familia)."
-              );
-            }}
-          >
-            🎮 Aplicar set al juego de este dispositivo
-          </button>
-        </div>
+              <label className="campo">
+                Fortalezas e intereses
+                <textarea
+                  rows={2}
+                  value={caso.fortalezas}
+                  onChange={(e) => actualizarCaso(caso.id, { fortalezas: e.target.value })}
+                />
+              </label>
+              <label className="campo">
+                Forma actual / momento del NNA
+                <textarea
+                  rows={2}
+                  value={caso.formaActual}
+                  onChange={(e) => actualizarCaso(caso.id, { formaActual: e.target.value })}
+                />
+              </label>
+              <label className="campo">
+                Observaciones del profesional (no van a la guía)
+                <textarea
+                  rows={2}
+                  value={caso.observaciones}
+                  onChange={(e) => actualizarCaso(caso.id, { observaciones: e.target.value })}
+                />
+              </label>
+            </div>
+          </div>
 
-        {/* ----- guía para el hogar (6.3) ----- */}
-        <div className="tarjeta">
-          <strong>Guía para el hogar</strong>
-          {!caso.guia ? (
-            <>
-              <p className="ayuda">
-                El sistema redacta un borrador desde el perfil (plantillas con reglas, sin IA).
-                Usted deberá revisar cada bloque —confirmar, ajustar o descartar— antes de poder
-                generar la guía final. No existe «aprobar todo» de un clic (salvaguarda 5.5).
+          {/* Set de ejercicios + Clave */}
+          <div className="pro-seccion">
+            <div className="pro-seccion-cab">
+              <span className="pro-seccion-icono">🎮</span>
+              <h2 className="pro-seccion-titulo">Set de ejercicios y clave del juego</h2>
+            </div>
+            <div className="pro-seccion-cuerpo">
+              <p className="ayuda-pro">
+                Biblioteca organizada por mecanismo (A–E), no por diagnóstico. La base segura
+                (A propioceptivo + C respiratorio) aplica a todos los perfiles. El vestibular
+                intenso (B) solo para buscadores. Los reductores sensoriales (E) son prioritarios
+                en evitadores.
               </p>
               <button
-                className="boton"
-                onClick={() =>
-                  actualizarCaso(caso.id, {
-                    guia: { bloques: generarBloques(caso), generadaEl: null },
-                  })
-                }
-              >
-                📝 Generar borrador de guía
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="ayuda">
-                Revise cada bloque: puede editarlo, confirmarlo o descartarlo. Editar un bloque ya
-                confirmado lo devuelve a pendiente. {confirmados} confirmados ·{" "}
-                {bloques.filter((b) => b.estado === "descartado").length} descartados · {pendientes}{" "}
-                pendientes.
-              </p>
-              {bloques.map((b) => (
-                <div key={b.id} className={`bloque-guia ${b.estado}`}>
-                  <div className="bloque-cabecera">
-                    <strong>{b.titulo}</strong>
-                    <span className={`estado-chip ${b.estado}`}>{b.estado}</span>
-                  </div>
-                  <textarea
-                    rows={5}
-                    value={b.texto}
-                    onChange={(e) =>
-                      actualizarCaso(caso.id, {
-                        guia: {
-                          ...caso.guia!,
-                          bloques: bloques.map((x) =>
-                            x.id === b.id
-                              ? { ...x, texto: e.target.value, estado: "pendiente" }
-                              : x
-                          ),
-                        },
-                      })
+                className="boton boton-pro"
+                onClick={() => {
+                  const sugerido = EXERCISE_LIBRARY.filter((e) => {
+                    const baseSegura =
+                      (e.familia === "propioceptivo" || e.familia === "respiratorio") &&
+                      e.seguridad === "transversal";
+                    const cognitivosUtiles = e.familia === "cognitivo";
+                    if (caso.perfilSensorial === "buscador") {
+                      return baseSegura || cognitivosUtiles || e.familia === "vestibular";
                     }
-                  />
-                  <div className="fila-botones">
-                    {b.estado !== "confirmado" && (
-                      <button
-                        className="boton verde"
-                        onClick={() =>
-                          actualizarCaso(caso.id, {
-                            guia: {
-                              ...caso.guia!,
-                              bloques: bloques.map((x) =>
-                                x.id === b.id ? { ...x, estado: "confirmado" } : x
-                              ),
-                            },
-                          })
-                        }
-                      >
-                        ✓ Confirmar
-                      </button>
-                    )}
-                    {b.estado !== "descartado" && (
+                    if (caso.perfilSensorial === "evitador") {
+                      return (
+                        baseSegura || cognitivosUtiles || e.familia === "sensorial" ||
+                        (e.familia === "vestibular" && e.seguridad === "transversal")
+                      );
+                    }
+                    return e.seguridad === "transversal" || cognitivosUtiles;
+                  }).map((e) => e.id);
+                  actualizarCaso(caso.id, { ejercicios: sugerido });
+                }}
+              >
+                ✨ Sugerir set según perfil ({caso.perfilSensorial})
+              </button>
+
+              {ORDEN_FAMILIAS.map((fam) => {
+                const ejercicios = EXERCISE_LIBRARY.filter((e) => e.familia === fam);
+                const info = FAMILIAS[fam];
+                return (
+                  <div key={fam}>
+                    <div className="familia-cab">
+                      <span className="familia-letra">{info.letra}</span>
+                      <span className="familia-nombre">{info.nombre}</span>
+                    </div>
+                    {ejercicios.map((ej) => (
+                      <label key={ej.id} className="fila-check">
+                        <input
+                          type="checkbox"
+                          checked={caso.ejercicios.includes(ej.id)}
+                          onChange={() =>
+                            actualizarCaso(caso.id, {
+                              ejercicios: caso.ejercicios.includes(ej.id)
+                                ? caso.ejercicios.filter((x) => x !== ej.id)
+                                : [...caso.ejercicios, ej.id],
+                            })
+                          }
+                        />
+                        <span style={{ fontSize: "1.1rem" }}>{ej.emoji}</span>
+                        <span style={{ flex: 1 }}>{ej.nombre}</span>
+                        <span className={`chip-seg ${ej.seguridad}`}>
+                          {ej.seguridad === "precaucion" ? "precaución" : "seguro"}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                );
+              })}
+
+              <button
+                className="boton verde"
+                onClick={() => {
+                  storage.setClinical({ ...storage.getClinical(), ejercicios: caso.ejercicios });
+                  alert("Set aplicado al juego de este dispositivo.");
+                }}
+              >
+                🎮 Aplicar set al juego de este dispositivo
+              </button>
+
+              <hr style={{ border: "none", borderTop: "1px solid var(--pro-borde)", margin: "4px 0" }} />
+
+              <div>
+                <span className="campo-titulo">Clave de acceso al juego</span>
+                <p className="ayuda-pro">
+                  Abre únicamente el juego — nunca la ficha ni la guía. El niño o la niña
+                  solo ve el avatar y los ejercicios configurados. Revocable en cualquier momento.
+                </p>
+                {caso.clave ? (
+                  <>
+                    <code className="clave-juego">{caso.clave}</code>
+                    <div className="fila-botones" style={{ marginTop: 10 }}>
                       <button
                         className="boton secundario"
-                        onClick={() =>
+                        onClick={() => {
+                          navigator.clipboard?.writeText(caso.clave!);
+                          setAvisoCopia(true);
+                          setTimeout(() => setAvisoCopia(false), 2000);
+                        }}
+                      >
+                        {avisoCopia ? "✓ Copiada" : "Copiar"}
+                      </button>
+                      <button
+                        className="boton secundario"
+                        onClick={() => actualizarCaso(caso.id, { clave: generarClave() })}
+                      >
+                        Regenerar
+                      </button>
+                      <button
+                        className="boton secundario"
+                        style={{ color: "var(--rojo)" }}
+                        onClick={() => actualizarCaso(caso.id, { clave: null })}
+                      >
+                        Revocar
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    className="boton boton-pro"
+                    onClick={() => actualizarCaso(caso.id, { clave: generarClave() })}
+                  >
+                    🔑 Generar clave del juego
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Guía para el hogar */}
+          <div className="pro-seccion">
+            <div className="pro-seccion-cab">
+              <span className="pro-seccion-icono">📝</span>
+              <h2 className="pro-seccion-titulo">Guía para el hogar</h2>
+            </div>
+            <div className="pro-seccion-cuerpo">
+              {!caso.guia ? (
+                <>
+                  <p className="ayuda-pro">
+                    El sistema genera un borrador desde el perfil del caso usando plantillas con
+                    reglas clínicas. Usted revisará cada bloque —confirmar, ajustar o descartar—
+                    antes de poder generar la guía final. No hay «aprobar todo» en un clic
+                    (salvaguarda 5.5).
+                  </p>
+                  <button
+                    className="boton boton-pro"
+                    onClick={() =>
+                      actualizarCaso(caso.id, {
+                        guia: { bloques: generarBloques(caso), generadaEl: null },
+                      })
+                    }
+                  >
+                    📝 Generar borrador desde la ficha
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: "flex", gap: 8, flexWrap: "wrap",
+                      padding: "10px 14px",
+                      background: "var(--pro-suave)",
+                      borderRadius: 10, fontSize: "0.85rem",
+                    }}
+                  >
+                    <span className="pro-badge pro-badge--ok">✓ {confirmadosCnt} confirmados</span>
+                    <span className="pro-badge pro-badge--pend">⏳ {pendientes} pendientes</span>
+                    <span className="pro-badge pro-badge--sin">
+                      ✕ {bloques.filter((b) => b.estado === "descartado").length} descartados
+                    </span>
+                  </div>
+
+                  {bloques.map((b) => (
+                    <div key={b.id} className={`bloque-guia ${b.estado}`}>
+                      <div className="bloque-cabecera">
+                        <strong>{b.titulo}</strong>
+                        <span className={`estado-chip ${b.estado}`}>{b.estado}</span>
+                      </div>
+                      <textarea
+                        rows={5}
+                        value={b.texto}
+                        onChange={(e) =>
                           actualizarCaso(caso.id, {
                             guia: {
                               ...caso.guia!,
                               bloques: bloques.map((x) =>
-                                x.id === b.id ? { ...x, estado: "descartado" } : x
+                                x.id === b.id
+                                  ? { ...x, texto: e.target.value, estado: "pendiente" }
+                                  : x
                               ),
                             },
                           })
                         }
-                      >
-                        ✕ Descartar
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-              <button
-                className="boton"
-                disabled={!puedeGenerar}
-                onClick={() => {
-                  actualizarCaso(caso.id, {
-                    guia: { ...caso.guia!, generadaEl: new Date().toISOString() },
-                  });
-                  setVista("guiaFinal");
-                }}
-              >
-                {puedeGenerar
-                  ? "📄 Generar guía final"
-                  : `Revise los ${pendientes} bloques pendientes para continuar`}
-              </button>
-              {caso.guia.generadaEl && (
-                <button className="boton secundario" onClick={() => setVista("guiaFinal")}>
-                  Ver guía generada
-                </button>
+                      />
+                      <div className="fila-botones">
+                        {b.estado !== "confirmado" && (
+                          <button
+                            className="boton verde"
+                            onClick={() =>
+                              actualizarCaso(caso.id, {
+                                guia: {
+                                  ...caso.guia!,
+                                  bloques: bloques.map((x) =>
+                                    x.id === b.id ? { ...x, estado: "confirmado" } : x
+                                  ),
+                                },
+                              })
+                            }
+                          >
+                            ✓ Confirmar
+                          </button>
+                        )}
+                        {b.estado !== "descartado" && (
+                          <button
+                            className="boton secundario"
+                            onClick={() =>
+                              actualizarCaso(caso.id, {
+                                guia: {
+                                  ...caso.guia!,
+                                  bloques: bloques.map((x) =>
+                                    x.id === b.id ? { ...x, estado: "descartado" } : x
+                                  ),
+                                },
+                              })
+                            }
+                          >
+                            ✕ Descartar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    className="boton boton-pro"
+                    disabled={!puedeGenerar}
+                    onClick={() => {
+                      actualizarCaso(caso.id, {
+                        guia: { ...caso.guia!, generadaEl: new Date().toISOString() },
+                      });
+                      setVista("guiaFinal");
+                    }}
+                  >
+                    {puedeGenerar
+                      ? "📄 Generar guía final"
+                      : `Revise los ${pendientes} bloques pendientes para continuar`}
+                  </button>
+
+                  {caso.guia.generadaEl && (
+                    <button className="boton secundario" onClick={() => setVista("guiaFinal")}>
+                      Ver guía generada
+                    </button>
+                  )}
+
+                  <button
+                    className="boton secundario"
+                    onClick={() => {
+                      if (window.confirm("¿Reemplazar el borrador y perder la revisión hecha?")) {
+                        actualizarCaso(caso.id, {
+                          guia: { bloques: generarBloques(caso), generadaEl: null },
+                        });
+                      }
+                    }}
+                  >
+                    ↺ Volver a generar borrador desde la ficha
+                  </button>
+                </>
               )}
-              <button
-                className="boton secundario"
-                onClick={() => {
-                  if (window.confirm("¿Reemplazar el borrador actual y perder la revisión hecha?")) {
-                    actualizarCaso(caso.id, {
-                      guia: { bloques: generarBloques(caso), generadaEl: null },
-                    });
-                  }
-                }}
-              >
-                ↺ Volver a generar borrador desde la ficha
-              </button>
-            </>
-          )}
+            </div>
+          </div>
+
+          <p className="nota-pie" style={{ color: "var(--pro-meta)" }}>
+            Prototipo sin servidor · Ficha y casos en este dispositivo únicamente ·{" "}
+            <Link href="/jugar/">Ir al juego</Link>
+          </p>
         </div>
       </main>
     );
   }
 
-  // ---------- vista: lista de casos (6.1) ----------
-
-  const activos = casos.filter((c) => !c.archivado);
+  /* ---- Vista: lista de casos ---- */
+  const activos   = casos.filter((c) => !c.archivado);
   const archivados = casos.filter((c) => c.archivado);
 
   return (
-    <main className="pantalla">
-      <h1 className="titulo">Mis pacientes</h1>
-      <p className="subtitulo">
-        {cuenta.nombre} · {cuenta.profesion} · Reg. {cuenta.registro}
-      </p>
+    <main className="pantalla-pro">
+      <ProTopbar
+        cuenta={cuenta}
+        onLogout={() => { proStorage.setSesion(false); setSesion(false); }}
+      />
+      <div className="pro-contenido">
 
-      <button
-        className="boton"
-        onClick={() => {
-          const c = nuevoCaso(casos);
-          setCasos((prev) => [...prev, c]);
-          setCasoId(c.id);
-          setVista("caso");
-        }}
-      >
-        ＋ Nuevo caso
-      </button>
-
-      {activos.length === 0 && (
-        <div className="tarjeta" style={{ textAlign: "center", color: "var(--tinta-suave)" }}>
-          Aún no hay casos. Cree el primero: se identifica por código, nunca por nombre real.
-        </div>
-      )}
-
-      {activos.map((c) => (
-        <div key={c.id} className="tarjeta caso-tarjeta">
+        <div className="pro-page-header">
+          <div>
+            <h1 className="pro-page-titulo">Mis pacientes</h1>
+            <p className="pro-page-meta">
+              {cuenta.profesion} · Reg. {cuenta.registro}
+            </p>
+          </div>
           <button
-            className="caso-principal"
+            className="boton boton-pro"
+            style={{ width: "auto", padding: "12px 20px", fontSize: "1rem" }}
             onClick={() => {
+              const c = nuevoCaso(casos);
+              setCasos((prev) => [...prev, c]);
               setCasoId(c.id);
               setVista("caso");
             }}
           >
-            <strong>{c.codigo}</strong>
-            <span className="ayuda">
-              {c.diagnosticos.length > 0 ? c.diagnosticos.join(" · ") : "Sin diagnóstico aún"} ·{" "}
-              {c.guia
-                ? c.guia.generadaEl
-                  ? "Guía generada ✓"
-                  : "Guía en revisión…"
-                : "Sin guía"}{" "}
-              · {c.clave ? "Clave activa 🔑" : "Sin clave"}
-            </span>
-          </button>
-          <button
-            className="boton secundario boton-archivar"
-            onClick={() => actualizarCaso(c.id, { archivado: true })}
-          >
-            Archivar
+            ＋ Nuevo caso
           </button>
         </div>
-      ))}
 
-      {archivados.length > 0 && (
-        <div className="tarjeta">
-          <strong style={{ color: "var(--tinta-suave)" }}>Archivados</strong>
-          {archivados.map((c) => (
-            <div key={c.id} className="caso-tarjeta" style={{ opacity: 0.7 }}>
-              <span style={{ flex: 1 }}>{c.codigo}</span>
+        {activos.length === 0 && (
+          <div
+            style={{
+              background: "white", border: "1px solid var(--pro-borde)",
+              borderRadius: 14, padding: "28px 20px",
+              textAlign: "center", color: "var(--pro-meta)",
+            }}
+          >
+            <div style={{ fontSize: "2rem", marginBottom: 8 }}>📂</div>
+            <p style={{ margin: 0, fontWeight: 600 }}>Aún no hay casos</p>
+            <p style={{ margin: "6px 0 0", fontSize: "0.88rem" }}>
+              Se identifican por código, nunca por nombre real.
+            </p>
+          </div>
+        )}
+
+        {activos.map((c) => {
+          const guiaBadge = c.guia
+            ? c.guia.generadaEl
+              ? <span className="pro-badge pro-badge--ok">Guía lista ✓</span>
+              : <span className="pro-badge pro-badge--pend">Guía en revisión</span>
+            : <span className="pro-badge pro-badge--sin">Sin guía</span>;
+          const claveBadge = c.clave
+            ? <span className="pro-badge pro-badge--clave">🔑 Clave activa</span>
+            : null;
+
+          return (
+            <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <button
-                className="boton secundario boton-archivar"
-                onClick={() => actualizarCaso(c.id, { archivado: false })}
+                className="pro-caso-card"
+                style={{ flex: 1 }}
+                onClick={() => { setCasoId(c.id); setVista("caso"); }}
               >
-                Restaurar
+                <div style={{ flex: 1 }}>
+                  <div className="pro-caso-codigo">{c.codigo}</div>
+                  <div className="pro-caso-meta">
+                    {c.diagnosticos.length > 0
+                      ? c.diagnosticos.join(" · ")
+                      : "Sin diagnóstico aún"}
+                    {" · "}
+                    {guiaBadge}
+                    {claveBadge}
+                  </div>
+                </div>
+                <span className="pro-caso-arrow">›</span>
+              </button>
+              <button
+                className="boton secundario"
+                style={{ width: "auto", padding: "10px 14px", fontSize: "0.85rem", flexShrink: 0 }}
+                onClick={() => actualizarCaso(c.id, { archivado: true })}
+              >
+                Archivar
               </button>
             </div>
-          ))}
-        </div>
-      )}
+          );
+        })}
 
-      <p className="nota-pie">
-        <Link href="/">Ir al juego</Link> ·{" "}
-        <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            proStorage.setSesion(false);
-            setSesion(false);
-          }}
-        >
-          Cerrar sesión
-        </a>
-        <br />
-        Prototipo sin servidor: la ficha y los casos viven solo en este dispositivo. La guía y el
-        juego nunca contienen la ficha clínica (frontera de datos, sección 2).
-      </p>
-    </main>
-  );
-}
-
-// ---------- formularios de acceso (decisión #8: registro declarativo) ----------
-
-function RegistroForm({ onRegistrar }: { onRegistrar: (c: CuentaPro) => void }) {
-  const [nombre, setNombre] = useState("");
-  const [profesion, setProfesion] = useState(PROFESIONES[0]);
-  const [email, setEmail] = useState("");
-  const [registro, setRegistro] = useState("");
-  const [clave, setClave] = useState("");
-
-  const valido = nombre.trim() && email.trim() && registro.trim() && clave.length >= 4;
-
-  return (
-    <main className="pantalla" style={{ justifyContent: "center" }}>
-      <div className="tarjeta">
-        <h1 className="titulo">Registro profesional</h1>
-        <p className="subtitulo" style={{ marginBottom: 14 }}>
-          El número de registro de prestador se declara (la verificación contra el registro oficial
-          es una fase posterior).
-        </p>
-        <label className="campo">
-          Nombre completo
-          <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
-        </label>
-        <label className="campo">
-          Profesión
-          <select value={profesion} onChange={(e) => setProfesion(e.target.value)}>
-            {PROFESIONES.map((p) => (
-              <option key={p}>{p}</option>
+        {archivados.length > 0 && (
+          <div>
+            <p className="pro-archivados-titulo">Archivados ({archivados.length})</p>
+            {archivados.map((c) => (
+              <div key={c.id} className="pro-archivado-row">
+                <span style={{ flex: 1, fontWeight: 600, color: "var(--pro-meta)" }}>
+                  {c.codigo}
+                </span>
+                <button
+                  className="boton secundario"
+                  style={{ width: "auto", padding: "8px 14px", fontSize: "0.85rem" }}
+                  onClick={() => actualizarCaso(c.id, { archivado: false })}
+                >
+                  Restaurar
+                </button>
+              </div>
             ))}
-          </select>
-        </label>
-        <label className="campo">
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label className="campo">
-          N° registro de prestador de salud
-          <input value={registro} onChange={(e) => setRegistro(e.target.value)} />
-        </label>
-        <label className="campo">
-          Contraseña (mínimo 4 caracteres)
-          <input type="password" value={clave} onChange={(e) => setClave(e.target.value)} />
-        </label>
-        <button
-          className="boton"
-          disabled={!valido}
-          onClick={() =>
-            onRegistrar({
-              nombre: nombre.trim(),
-              profesion,
-              email: email.trim().toLowerCase(),
-              registro: registro.trim(),
-              claveHash: hashSimple(clave),
-            })
-          }
-        >
-          Crear cuenta
-        </button>
-        <Link href="/" className="boton secundario" style={{ marginTop: 10 }}>
-          Volver al juego
-        </Link>
+          </div>
+        )}
+
+        <p className="nota-pie" style={{ color: "var(--pro-meta)" }}>
+          Prototipo sin servidor · La ficha y los casos viven solo en este dispositivo ·{" "}
+          <Link href="/jugar/">Ir al juego</Link>
+        </p>
       </div>
     </main>
   );
 }
 
-function LoginForm({ cuenta, onEntrar }: { cuenta: CuentaPro; onEntrar: () => void }) {
+/* ===== Formularios de acceso ===== */
+
+function RegistroForm({ onRegistrar }: { onRegistrar: (c: CuentaPro) => void }) {
+  const [nombre,    setNombre]    = useState("");
+  const [profesion, setProfesion] = useState(PROFESIONES[0]);
+  const [email,     setEmail]     = useState("");
+  const [registro,  setRegistro]  = useState("");
+  const [clave,     setClave]     = useState("");
+
+  const valido = nombre.trim() && email.trim() && registro.trim() && clave.length >= 4;
+
+  return (
+    <main className="pantalla-pro">
+      <div className="pro-topbar">
+        <div className="pro-marca">
+          <span className="pro-marca-nombre">Mi Calma</span>
+          <span className="pro-marca-tag">Acceso profesional</span>
+        </div>
+      </div>
+      <div className="pro-contenido pro-contenido--centrado">
+        <div className="pro-acceso-card">
+          <h1 className="pro-acceso-titulo">Registro profesional</h1>
+          <p className="pro-acceso-sub">
+            El número de registro de prestador se declara. La verificación contra el
+            registro oficial es una fase posterior del prototipo.
+          </p>
+          <label className="campo">
+            Nombre completo
+            <input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </label>
+          <label className="campo">
+            Profesión
+            <select value={profesion} onChange={(e) => setProfesion(e.target.value)}>
+              {PROFESIONES.map((p) => <option key={p}>{p}</option>)}
+            </select>
+          </label>
+          <label className="campo">
+            Email
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+          <label className="campo">
+            N° registro de prestador de salud
+            <input value={registro} onChange={(e) => setRegistro(e.target.value)} />
+          </label>
+          <label className="campo">
+            Contraseña (mínimo 4 caracteres)
+            <input type="password" value={clave} onChange={(e) => setClave(e.target.value)} />
+          </label>
+          <button
+            className="boton boton-pro"
+            style={{ marginTop: 6 }}
+            disabled={!valido}
+            onClick={() =>
+              onRegistrar({
+                nombre:    nombre.trim(),
+                profesion,
+                email:     email.trim().toLowerCase(),
+                registro:  registro.trim(),
+                claveHash: hashSimple(clave),
+              })
+            }
+          >
+            Crear cuenta
+          </button>
+          <Link href="/jugar/" className="boton secundario" style={{ marginTop: 10 }}>
+            Volver al juego
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function LoginForm({
+  cuenta,
+  onEntrar,
+}: {
+  cuenta: CuentaPro;
+  onEntrar: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
   const [error, setError] = useState(false);
 
   return (
-    <main className="pantalla" style={{ justifyContent: "center" }}>
-      <div className="tarjeta">
-        <h1 className="titulo">Acceso profesional</h1>
-        <label className="campo">
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <label className="campo">
-          Contraseña
-          <input type="password" value={clave} onChange={(e) => setClave(e.target.value)} />
-        </label>
-        {error && (
-          <p style={{ color: "var(--rojo)", fontWeight: 700 }}>Email o contraseña incorrectos.</p>
-        )}
-        <button
-          className="boton"
-          onClick={() => {
-            if (
-              email.trim().toLowerCase() === cuenta.email &&
-              hashSimple(clave) === cuenta.claveHash
-            ) {
-              onEntrar();
-            } else {
-              setError(true);
-            }
-          }}
-        >
-          Entrar
-        </button>
-        <Link href="/" className="boton secundario" style={{ marginTop: 10 }}>
-          Volver al juego
-        </Link>
+    <main className="pantalla-pro">
+      <div className="pro-topbar">
+        <div className="pro-marca">
+          <span className="pro-marca-nombre">Mi Calma</span>
+          <span className="pro-marca-tag">Acceso profesional</span>
+        </div>
+      </div>
+      <div className="pro-contenido pro-contenido--centrado">
+        <div className="pro-acceso-card">
+          <h1 className="pro-acceso-titulo">Acceso profesional</h1>
+          <label className="campo">
+            Email
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+          <label className="campo">
+            Contraseña
+            <input type="password" value={clave} onChange={(e) => setClave(e.target.value)} />
+          </label>
+          {error && (
+            <p style={{ color: "var(--rojo)", fontWeight: 700, margin: "4px 0 0" }}>
+              Email o contraseña incorrectos.
+            </p>
+          )}
+          <button
+            className="boton boton-pro"
+            style={{ marginTop: 6 }}
+            onClick={() => {
+              if (
+                email.trim().toLowerCase() === cuenta.email &&
+                hashSimple(clave) === cuenta.claveHash
+              ) {
+                onEntrar();
+              } else {
+                setError(true);
+              }
+            }}
+          >
+            Entrar
+          </button>
+          <Link href="/jugar/" className="boton secundario" style={{ marginTop: 10 }}>
+            Volver al juego
+          </Link>
+        </div>
       </div>
     </main>
   );
