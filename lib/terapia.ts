@@ -38,7 +38,7 @@ export const TERAPIA_AREAS: Record<TerapiaArea, AreaDef> = {
   patio: {
     id: "patio",
     nombre: "Patio de entrada",
-    piso: "#9ccb6a",
+    piso: "#86efac",
     entrada: [0, 3.4],
     frame: 9,
     limites: [7.5, -3, 4.2],
@@ -47,7 +47,7 @@ export const TERAPIA_AREAS: Record<TerapiaArea, AreaDef> = {
   recepcion: {
     id: "recepcion",
     nombre: "Recepción",
-    piso: "#e3d3c0",
+    piso: "#fde68a",
     entrada: [0, 3.4],
     frame: 7.8,
     limites: [6, -3, 4.2],
@@ -68,7 +68,7 @@ export const TERAPIA_AREAS: Record<TerapiaArea, AreaDef> = {
   psicologia: {
     id: "psicologia",
     nombre: "Sala de Psicología",
-    piso: "#d9c9e0",
+    piso: "#e9d5ff",
     entrada: [0, 3.2],
     frame: 7.2,
     limites: [6, -3, 4.2],
@@ -77,7 +77,7 @@ export const TERAPIA_AREAS: Record<TerapiaArea, AreaDef> = {
   fonoaudiologia: {
     id: "fonoaudiologia",
     nombre: "Sala de Fonoaudiología",
-    piso: "#cfe0e8",
+    piso: "#bfdbfe",
     entrada: [0, 3.2],
     frame: 7.2,
     limites: [6, -3, 4.2],
@@ -86,7 +86,7 @@ export const TERAPIA_AREAS: Record<TerapiaArea, AreaDef> = {
   "terapia-ocupacional": {
     id: "terapia-ocupacional",
     nombre: "Sala de Terapia Ocupacional",
-    piso: "#e8dcc0",
+    piso: "#fef08a",
     entrada: [0, 3.4],
     frame: 8,
     limites: [7, -3.5, 4.2],

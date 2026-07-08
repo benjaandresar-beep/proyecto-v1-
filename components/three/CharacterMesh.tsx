@@ -1,8 +1,10 @@
 "use client";
 
-// Personaje low-poly 3D (niño/NPC/adulto) con extremidades articuladas.
+// Personaje 3D estilo bloques (niño/NPC/adulto) con extremidades articuladas.
+// Cuerpo, cabeza y extremidades son cajas con materiales lisos que proyectan
+// sombra, al estilo de los juegos 3D infantiles tipo voxel.
 // Animaciones: caminata (al desplazarse) y un arquetipo por tipo de ejercicio
-// (salto, correr en el sitio, empujar, calma). Arte provisional reemplazable.
+// (salto, correr en el sitio, empujar, calma).
 // La guatita translúcida muestra la acumulación cualitativa de emociones
 // (interocepción, 3.3): segmentos de color apilados, sin números visibles.
 
@@ -31,8 +33,10 @@ interface Props {
 }
 
 const BELLY_HEIGHT = 0.5; // alto interno disponible para los segmentos de carga
-const BRAZO_BASE_I = 0.25; // inclinación de reposo de los brazos
-const BRAZO_BASE_D = -0.25;
+const BRAZO_BASE_I = 0.12; // inclinación de reposo de los brazos
+const BRAZO_BASE_D = -0.12;
+const PANTALON = "#3b82f6";
+const OJOS = "#1f2937";
 
 export default function CharacterMesh({
   piel,
@@ -160,149 +164,138 @@ export default function CharacterMesh({
   return (
     <group ref={grupo} scale={escala}>
       {/* piernas articuladas en la cadera */}
-      <group ref={piernaI} position={[-0.16, 0.62, 0]}>
-        <mesh position={[0, -0.31, 0]}>
-          <cylinderGeometry args={[0.09, 0.09, 0.6, 8]} />
-          <meshStandardMaterial color="#3f5a78" flatShading />
+      <group ref={piernaI} position={[-0.17, 0.62, 0]}>
+        <mesh position={[0, -0.31, 0]} castShadow>
+          <boxGeometry args={[0.26, 0.62, 0.3]} />
+          <meshStandardMaterial color={PANTALON} />
         </mesh>
       </group>
-      <group ref={piernaD} position={[0.16, 0.62, 0]}>
-        <mesh position={[0, -0.31, 0]}>
-          <cylinderGeometry args={[0.09, 0.09, 0.6, 8]} />
-          <meshStandardMaterial color="#3f5a78" flatShading />
+      <group ref={piernaD} position={[0.17, 0.62, 0]}>
+        <mesh position={[0, -0.31, 0]} castShadow>
+          <boxGeometry args={[0.26, 0.62, 0.3]} />
+          <meshStandardMaterial color={PANTALON} />
         </mesh>
       </group>
 
       {/* torso */}
-      <mesh position={[0, 0.95, 0]}>
-        <capsuleGeometry args={[0.34, 0.5, 4, 10]} />
-        <meshStandardMaterial color={polera} flatShading />
+      <mesh position={[0, 0.95, 0]} castShadow>
+        <boxGeometry args={[0.72, 0.92, 0.4]} />
+        <meshStandardMaterial color={polera} />
       </mesh>
 
       {/* brazos articulados en el hombro */}
-      <group ref={brazoI} position={[-0.4, 1.2, 0]} rotation={[0, 0, BRAZO_BASE_I]}>
-        <mesh position={[0, -0.26, 0]}>
-          <capsuleGeometry args={[0.08, 0.45, 4, 8]} />
-          <meshStandardMaterial color={polera} flatShading />
+      <group ref={brazoI} position={[-0.47, 1.28, 0]} rotation={[0, 0, BRAZO_BASE_I]}>
+        <mesh position={[0, -0.3, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.66, 0.22]} />
+          <meshStandardMaterial color={polera} />
         </mesh>
-        <mesh position={[0, -0.55, 0]}>
-          <sphereGeometry args={[0.09, 8, 8]} />
-          <meshStandardMaterial color={piel} flatShading />
+        <mesh position={[0, -0.7, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.16, 0.2]} />
+          <meshStandardMaterial color={piel} />
         </mesh>
       </group>
-      <group ref={brazoD} position={[0.4, 1.2, 0]} rotation={[0, 0, BRAZO_BASE_D]}>
-        <mesh position={[0, -0.26, 0]}>
-          <capsuleGeometry args={[0.08, 0.45, 4, 8]} />
-          <meshStandardMaterial color={polera} flatShading />
+      <group ref={brazoD} position={[0.47, 1.28, 0]} rotation={[0, 0, BRAZO_BASE_D]}>
+        <mesh position={[0, -0.3, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.66, 0.22]} />
+          <meshStandardMaterial color={polera} />
         </mesh>
-        <mesh position={[0, -0.55, 0]}>
-          <sphereGeometry args={[0.09, 8, 8]} />
-          <meshStandardMaterial color={piel} flatShading />
+        <mesh position={[0, -0.7, 0]} castShadow>
+          <boxGeometry args={[0.18, 0.16, 0.2]} />
+          <meshStandardMaterial color={piel} />
         </mesh>
       </group>
 
       {/* guatita translúcida con la carga acumulada (3.3) */}
-      <group position={[0, 0.88, 0.27]}>
+      <group position={[0, 0.88, 0.22]}>
         <mesh>
-          <sphereGeometry args={[0.27, 12, 12]} />
+          <boxGeometry args={[0.5, 0.56, 0.16]} />
           <meshStandardMaterial
             color="#ffffff"
             transparent
             opacity={0.35}
-            emissive={total >= 75 ? "#e0503f" : "#000000"}
+            emissive={total >= 75 ? "#ef4444" : "#000000"}
             emissiveIntensity={total >= 75 ? 0.35 : 0}
           />
         </mesh>
         {segmentos.map((s, i) => (
-          <mesh key={i} position={[0, s.y, 0]}>
-            <cylinderGeometry args={[0.18, 0.18, s.alto, 10]} />
-            <meshStandardMaterial color={s.color} flatShading />
+          <mesh key={i} position={[0, s.y, 0.005]}>
+            <boxGeometry args={[0.4, s.alto, 0.1]} />
+            <meshStandardMaterial color={s.color} />
           </mesh>
         ))}
       </group>
 
       {/* cabeza */}
-      <mesh position={[0, 1.62, 0]}>
-        <sphereGeometry args={[0.32, 14, 14]} />
-        <meshStandardMaterial color={piel} flatShading />
+      <mesh position={[0, 1.62, 0]} castShadow>
+        <boxGeometry args={[0.56, 0.56, 0.56]} />
+        <meshStandardMaterial color={piel} />
       </mesh>
       {/* ojos */}
-      <mesh position={[-0.11, 1.66, 0.27]}>
-        <sphereGeometry args={[0.035, 6, 6]} />
-        <meshStandardMaterial color="#2c2c2c" />
+      <mesh position={[-0.12, 1.66, 0.29]}>
+        <sphereGeometry args={[0.05, 10, 10]} />
+        <meshStandardMaterial color={OJOS} />
       </mesh>
-      <mesh position={[0.11, 1.66, 0.27]}>
-        <sphereGeometry args={[0.035, 6, 6]} />
-        <meshStandardMaterial color="#2c2c2c" />
+      <mesh position={[0.12, 1.66, 0.29]}>
+        <sphereGeometry args={[0.05, 10, 10]} />
+        <meshStandardMaterial color={OJOS} />
       </mesh>
 
-      {/* audífonos: cintillo y orejeras */}
+      {/* audífonos: banda y orejeras en bloques */}
       {audifonos && (
         <group position={[0, 1.62, 0]}>
-          <mesh position={[0, 0.12, 0]}>
-            <torusGeometry args={[0.34, 0.045, 8, 18, Math.PI]} />
-            <meshStandardMaterial color="#3c3c3c" flatShading />
+          <mesh position={[0, 0.32, 0]}>
+            <boxGeometry args={[0.68, 0.08, 0.12]} />
+            <meshStandardMaterial color="#3c3c3c" />
           </mesh>
-          <mesh position={[-0.33, 0, 0.02]}>
-            <sphereGeometry args={[0.1, 8, 8]} />
-            <meshStandardMaterial color="#3c3c3c" flatShading />
+          <mesh position={[-0.33, 0.02, 0]}>
+            <boxGeometry args={[0.1, 0.26, 0.26]} />
+            <meshStandardMaterial color="#3c3c3c" />
           </mesh>
-          <mesh position={[0.33, 0, 0.02]}>
-            <sphereGeometry args={[0.1, 8, 8]} />
-            <meshStandardMaterial color="#3c3c3c" flatShading />
+          <mesh position={[0.33, 0.02, 0]}>
+            <boxGeometry args={[0.1, 0.26, 0.26]} />
+            <meshStandardMaterial color="#3c3c3c" />
           </mesh>
         </group>
       )}
 
-      {/* pelo según estilo */}
+      {/* pelo según estilo (bloques) */}
       {pelo === "corto" && (
-        <mesh position={[0, 1.78, -0.02]}>
-          <sphereGeometry args={[0.33, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2.2]} />
-          <meshStandardMaterial color={colorPelo} flatShading />
+        <mesh position={[0, 1.93, -0.02]} castShadow>
+          <boxGeometry args={[0.6, 0.16, 0.6]} />
+          <meshStandardMaterial color={colorPelo} />
         </mesh>
       )}
       {pelo === "largo" && (
         <>
-          <mesh position={[0, 1.78, -0.02]}>
-            <sphereGeometry args={[0.34, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color={colorPelo} flatShading />
+          <mesh position={[0, 1.93, -0.02]} castShadow>
+            <boxGeometry args={[0.6, 0.16, 0.6]} />
+            <meshStandardMaterial color={colorPelo} />
           </mesh>
-          <mesh position={[0, 1.35, -0.22]}>
-            <cylinderGeometry args={[0.26, 0.2, 0.7, 10]} />
-            <meshStandardMaterial color={colorPelo} flatShading />
+          <mesh position={[0, 1.52, -0.31]} castShadow>
+            <boxGeometry args={[0.6, 0.72, 0.14]} />
+            <meshStandardMaterial color={colorPelo} />
           </mesh>
         </>
       )}
       {pelo === "rizado" && (
-        <group position={[0, 1.8, 0]}>
-          {[
-            [-0.18, 0.05, 0.1],
-            [0.18, 0.05, 0.1],
-            [0, 0.14, 0],
-            [-0.2, 0, -0.14],
-            [0.2, 0, -0.14],
-            [0, 0.06, -0.22],
-          ].map((p, i) => (
-            <mesh key={i} position={p as [number, number, number]}>
-              <sphereGeometry args={[0.15, 8, 8]} />
-              <meshStandardMaterial color={colorPelo} flatShading />
-            </mesh>
-          ))}
-        </group>
+        <mesh position={[0, 1.96, -0.02]} castShadow>
+          <boxGeometry args={[0.7, 0.34, 0.7]} />
+          <meshStandardMaterial color={colorPelo} />
+        </mesh>
       )}
       {pelo === "coleta" && (
         <>
-          <mesh position={[0, 1.78, -0.02]}>
-            <sphereGeometry args={[0.33, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2.2]} />
-            <meshStandardMaterial color={colorPelo} flatShading />
+          <mesh position={[0, 1.93, -0.02]} castShadow>
+            <boxGeometry args={[0.6, 0.16, 0.6]} />
+            <meshStandardMaterial color={colorPelo} />
           </mesh>
-          <mesh position={[0, 1.85, -0.3]}>
-            <sphereGeometry args={[0.1, 8, 8]} />
-            <meshStandardMaterial color={colorPelo} flatShading />
+          <mesh position={[0, 1.94, -0.34]} castShadow>
+            <boxGeometry args={[0.18, 0.18, 0.18]} />
+            <meshStandardMaterial color={colorPelo} />
           </mesh>
-          <mesh position={[0, 1.6, -0.36]} rotation={[0.4, 0, 0]}>
-            <cylinderGeometry args={[0.06, 0.03, 0.5, 8]} />
-            <meshStandardMaterial color={colorPelo} flatShading />
+          <mesh position={[0, 1.6, -0.38]} rotation={[0.25, 0, 0]} castShadow>
+            <boxGeometry args={[0.13, 0.55, 0.13]} />
+            <meshStandardMaterial color={colorPelo} />
           </mesh>
         </>
       )}

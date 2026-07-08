@@ -8,6 +8,7 @@ import { Canvas, useFrame, useThree, ThreeEvent } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import CharacterMesh from "./CharacterMesh";
+import AutoSombras from "./AutoSombras";
 import { ChargeMap, EmotionId, EMOTIONS } from "@/lib/emotions";
 import { ExerciseAnimation } from "@/lib/exercises";
 import { AvatarConfig } from "@/lib/storage";
@@ -175,6 +176,16 @@ function NpcGen({
         polera={npc.polera}
         esAdulto={npc.esAdulto}
       />
+      {emocion && (
+        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.75, 0.07, 10, 28]} />
+          <meshStandardMaterial
+            color={EMOTIONS[emocion].color}
+            emissive={EMOTIONS[emocion].color}
+            emissiveIntensity={0.55}
+          />
+        </mesh>
+      )}
       {mostrar && (
         <Html
           position={[0, npc.esAdulto ? 3.1 : 2.5, 0]}
@@ -253,7 +264,7 @@ function Puerta3D({
     >
       <mesh position={[0, 1.1, 0]}>
         <boxGeometry args={[1.5, 2.2, 0.22]} />
-        <meshStandardMaterial color="#8a6240" flatShading />
+        <meshStandardMaterial color="#8a6240" />
       </mesh>
       <mesh position={[0, 1.05, -0.02]}>
         <boxGeometry args={[1.15, 1.95, 0.05]} />
@@ -262,7 +273,7 @@ function Puerta3D({
       <group ref={panel} position={[-0.57, 0, 0.1]}>
         <mesh position={[0.57, 1.05, 0]}>
           <boxGeometry args={[1.08, 1.92, 0.09]} />
-          <meshStandardMaterial color="#b9824e" flatShading />
+          <meshStandardMaterial color="#b9824e" />
         </mesh>
         <mesh position={[1.0, 1.05, 0.08]}>
           <sphereGeometry args={[0.07, 8, 8]} />
@@ -280,19 +291,19 @@ function Sillon({ x, z, color }: { x: number; z: number; color: string }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.32, 0]}>
         <boxGeometry args={[1.5, 0.5, 0.9]} />
-        <meshStandardMaterial color={color} flatShading />
+        <meshStandardMaterial color={color} />
       </mesh>
       <mesh position={[0, 0.7, -0.36]}>
         <boxGeometry args={[1.5, 0.7, 0.2]} />
-        <meshStandardMaterial color={color} flatShading />
+        <meshStandardMaterial color={color} />
       </mesh>
       <mesh position={[-0.7, 0.55, 0]}>
         <boxGeometry args={[0.2, 0.5, 0.9]} />
-        <meshStandardMaterial color={color} flatShading />
+        <meshStandardMaterial color={color} />
       </mesh>
       <mesh position={[0.7, 0.55, 0]}>
         <boxGeometry args={[0.2, 0.5, 0.9]} />
-        <meshStandardMaterial color={color} flatShading />
+        <meshStandardMaterial color={color} />
       </mesh>
     </group>
   );
@@ -302,7 +313,7 @@ function Juguete({ x, z, color }: { x: number; z: number; color: string }) {
   return (
     <mesh position={[x, 0.18, z]}>
       <boxGeometry args={[0.32, 0.32, 0.32]} />
-      <meshStandardMaterial color={color} flatShading />
+      <meshStandardMaterial color={color} />
     </mesh>
   );
 }
@@ -312,12 +323,12 @@ function Mesita({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.45, 0]}>
         <boxGeometry args={[1, 0.08, 0.7]} />
-        <meshStandardMaterial color="#c89b6a" flatShading />
+        <meshStandardMaterial color="#c89b6a" />
       </mesh>
       {([[-0.4, -0.27], [0.4, -0.27], [-0.4, 0.27], [0.4, 0.27]] as [number, number][]).map(([px, pz], i) => (
         <mesh key={i} position={[px, 0.22, pz]}>
           <cylinderGeometry args={[0.04, 0.04, 0.45, 6]} />
-          <meshStandardMaterial color="#9a7448" flatShading />
+          <meshStandardMaterial color="#9a7448" />
         </mesh>
       ))}
     </group>
@@ -329,11 +340,11 @@ function TelefonoJuguete({ x, z }: { x: number; z: number }) {
     <group position={[x, 0.5, z]}>
       <mesh>
         <boxGeometry args={[0.34, 0.18, 0.5]} />
-        <meshStandardMaterial color="#e0503f" flatShading />
+        <meshStandardMaterial color="#e0503f" />
       </mesh>
       <mesh position={[0, 0.18, -0.12]} rotation={[0.3, 0, 0]}>
         <boxGeometry args={[0.12, 0.24, 0.12]} />
-        <meshStandardMaterial color="#3a3a3a" flatShading />
+        <meshStandardMaterial color="#3a3a3a" />
       </mesh>
       {/* ruedas (de arrastre) */}
       <mesh position={[-0.14, -0.12, 0.18]} rotation={[Math.PI / 2, 0, 0]}>
@@ -360,17 +371,17 @@ function Columpio({ x, z }: { x: number; z: number }) {
         <group key={sx}>
           <mesh position={[sx * 1.1, 1.2, -0.5]} rotation={[0, 0, sx * 0.25]}>
             <cylinderGeometry args={[0.07, 0.07, 2.6, 6]} />
-            <meshStandardMaterial color="#b06a4a" flatShading />
+            <meshStandardMaterial color="#b06a4a" />
           </mesh>
           <mesh position={[sx * 1.1, 1.2, 0.5]} rotation={[0, 0, sx * 0.25]}>
             <cylinderGeometry args={[0.07, 0.07, 2.6, 6]} />
-            <meshStandardMaterial color="#b06a4a" flatShading />
+            <meshStandardMaterial color="#b06a4a" />
           </mesh>
         </group>
       ))}
       <mesh position={[0, 2.35, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.07, 0.07, 2.6, 6]} />
-        <meshStandardMaterial color="#8a6240" flatShading />
+        <meshStandardMaterial color="#8a6240" />
       </mesh>
       {/* asiento que se mece */}
       <group ref={asiento} position={[0, 2.35, 0]}>
@@ -384,7 +395,7 @@ function Columpio({ x, z }: { x: number; z: number }) {
         </mesh>
         <mesh position={[0, -2, 0]}>
           <boxGeometry args={[0.8, 0.1, 0.4]} />
-          <meshStandardMaterial color="#f2c24b" flatShading />
+          <meshStandardMaterial color="#f2c24b" />
         </mesh>
       </group>
     </group>
@@ -396,7 +407,7 @@ function Trampolin({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.4, 0]}>
         <cylinderGeometry args={[1.1, 1.1, 0.2, 20]} />
-        <meshStandardMaterial color="#4a7dd6" flatShading />
+        <meshStandardMaterial color="#4a7dd6" />
       </mesh>
       <mesh position={[0, 0.52, 0]}>
         <cylinderGeometry args={[0.85, 0.85, 0.05, 20]} />
@@ -405,7 +416,7 @@ function Trampolin({ x, z }: { x: number; z: number }) {
       {Array.from({ length: 8 }, (_, i) => (i * Math.PI) / 4).map((a, i) => (
         <mesh key={i} position={[Math.cos(a) * 0.95, 0.2, Math.sin(a) * 0.95]}>
           <cylinderGeometry args={[0.05, 0.05, 0.4, 4]} />
-          <meshStandardMaterial color="#9a9a9a" flatShading />
+          <meshStandardMaterial color="#9a9a9a" />
         </mesh>
       ))}
     </group>
@@ -420,7 +431,7 @@ function Plasticinas({ x, z }: { x: number; z: number }) {
       {colores.map((c, i) => (
         <mesh key={i} position={[-0.32 + i * 0.16, 0.56, 0]}>
           <cylinderGeometry args={[0.08, 0.08, 0.12, 10]} />
-          <meshStandardMaterial color={c} flatShading />
+          <meshStandardMaterial color={c} />
         </mesh>
       ))}
     </group>
@@ -440,7 +451,7 @@ function Bloques({ x, z }: { x: number; z: number }) {
       {piezas.map(([px, py, pz, c], i) => (
         <mesh key={i} position={[px, py, pz]}>
           <boxGeometry args={[0.3, 0.3, 0.3]} />
-          <meshStandardMaterial color={c} flatShading />
+          <meshStandardMaterial color={c} />
         </mesh>
       ))}
     </group>
@@ -485,7 +496,7 @@ function MurosSala({ piso, ventana }: { piso: string; ventana?: boolean }) {
           {/* vistita verde del patio */}
           <mesh position={[0.5, -0.4, -0.04]}>
             <sphereGeometry args={[0.4, 8, 8]} />
-            <meshStandardMaterial color="#6fae7d" flatShading />
+            <meshStandardMaterial color="#4ade80" />
           </mesh>
         </group>
       )}
@@ -498,7 +509,7 @@ function Patio() {
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[20, 16]} />
-        <meshStandardMaterial color="#9ccb6a" />
+        <meshStandardMaterial color="#86efac" />
       </mesh>
       {/* camino al ingreso */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]}>
@@ -508,11 +519,11 @@ function Patio() {
       {/* fachada de la casa al fondo */}
       <mesh position={[0, 2, -5.4]}>
         <boxGeometry args={[14, 4, 0.6]} />
-        <meshStandardMaterial color="#e7c79a" flatShading />
+        <meshStandardMaterial color="#e7c79a" />
       </mesh>
       <mesh position={[0, 4.2, -5.4]}>
         <boxGeometry args={[14.6, 0.6, 1]} />
-        <meshStandardMaterial color="#b0604a" flatShading />
+        <meshStandardMaterial color="#b0604a" />
       </mesh>
       {/* letrero */}
       {[-4.5, 4.5].map((x) => (
@@ -525,25 +536,25 @@ function Patio() {
       {[-6, 6].map((x) => (
         <mesh key={x} position={[x, 1, 4.6]}>
           <boxGeometry args={[0.3, 2, 0.3]} />
-          <meshStandardMaterial color="#cfcfcf" flatShading />
+          <meshStandardMaterial color="#cfcfcf" />
         </mesh>
       ))}
       {[-1.1, 1.1].map((x) => (
         <mesh key={x} position={[x, 0.9, 4.6]}>
           <boxGeometry args={[0.18, 1.8, 0.18]} />
-          <meshStandardMaterial color="#9a9a9a" flatShading />
+          <meshStandardMaterial color="#9a9a9a" />
         </mesh>
       ))}
       {[-5, -3.5, -2.2, 3.5, 5, 2.2].map((x, i) => (
         <mesh key={i} position={[x, 0.85, 4.6]}>
           <boxGeometry args={[0.08, 1.7, 0.08]} />
-          <meshStandardMaterial color="#bdbdbd" flatShading />
+          <meshStandardMaterial color="#bdbdbd" />
         </mesh>
       ))}
       {[-4, 4].map((x) => (
         <mesh key={x} position={[x, 1.6, 4.6]}>
           <boxGeometry args={[4, 0.1, 0.1]} />
-          <meshStandardMaterial color="#bdbdbd" flatShading />
+          <meshStandardMaterial color="#bdbdbd" />
         </mesh>
       ))}
       {/* arbolitos */}
@@ -551,18 +562,18 @@ function Patio() {
         <group key={i} position={[x, 0, z]}>
           <mesh position={[0, 0.6, 0]}>
             <cylinderGeometry args={[0.14, 0.18, 1.2, 6]} />
-            <meshStandardMaterial color="#8a6240" flatShading />
+            <meshStandardMaterial color="#8a6240" />
           </mesh>
           <mesh position={[0, 1.5, 0]}>
             <sphereGeometry args={[0.7, 10, 10]} />
-            <meshStandardMaterial color="#6fae7d" flatShading />
+            <meshStandardMaterial color="#4ade80" />
           </mesh>
         </group>
       ))}
       {/* banca */}
       <mesh position={[-3.6, 0.4, 1.5]}>
         <boxGeometry args={[1.6, 0.15, 0.5]} />
-        <meshStandardMaterial color="#b0894e" flatShading />
+        <meshStandardMaterial color="#b0894e" />
       </mesh>
     </group>
   );
@@ -571,21 +582,21 @@ function Patio() {
 function Recepcion() {
   return (
     <group>
-      <MurosSala piso="#e3d3c0" />
+      <MurosSala piso="#fde68a" />
       {/* mesón de recepción */}
       <mesh position={[4.4, 0.55, -3]}>
         <boxGeometry args={[3, 1.1, 1]} />
-        <meshStandardMaterial color="#a3754a" flatShading />
+        <meshStandardMaterial color="#a3754a" />
       </mesh>
       <mesh position={[4.4, 1.15, -3]}>
         <boxGeometry args={[3.2, 0.1, 1.2]} />
-        <meshStandardMaterial color="#c89b6a" flatShading />
+        <meshStandardMaterial color="#c89b6a" />
       </mesh>
       {/* sillas de espera */}
       {[-5, -4, -3].map((x) => (
         <mesh key={x} position={[x, 0.35, 3.6]}>
           <boxGeometry args={[0.7, 0.7, 0.7]} />
-          <meshStandardMaterial color="#7fb0d6" flatShading />
+          <meshStandardMaterial color="#7fb0d6" />
         </mesh>
       ))}
       {/* alfombra */}
@@ -598,11 +609,11 @@ function Recepcion() {
 }
 
 const FONDO: Record<string, string> = {
-  patio: "#aee0f5",
-  recepcion: "#f0e7da",
-  psicologia: "#ece0f2",
-  fonoaudiologia: "#e0eef5",
-  "terapia-ocupacional": "#f3ecd8",
+  patio: "#bae6fd",
+  recepcion: "#fef3c7",
+  psicologia: "#f3e8ff",
+  fonoaudiologia: "#dbeafe",
+  "terapia-ocupacional": "#fef9c3",
 };
 
 export default function TerapiaScene({
@@ -636,17 +647,29 @@ export default function TerapiaScene({
   }
 
   return (
-    <Canvas camera={{ position: [0, 6.8, 9.8], fov: 48 }} style={{ position: "absolute", inset: 0 }}>
+    <Canvas shadows camera={{ position: [0, 6.8, 9.8], fov: 48 }} style={{ position: "absolute", inset: 0 }}>
       <CameraRig frame={area.frame} onDistancia={(d) => setFactorEtiqueta(10 * (d / DIST_BASE))} />
       <color attach="background" args={[FONDO[area.id]]} />
-      <ambientLight intensity={area.id === "patio" ? 1 : 0.85} />
-      <directionalLight position={[5, 9, 4]} intensity={1.1} />
+      <fog attach="fog" args={[FONDO[area.id], 25, 60]} />
+      <AutoSombras />
+      <ambientLight intensity={area.id === "patio" ? 0.85 : 0.75} />
+      <directionalLight
+        position={[10, 15, 8]}
+        intensity={0.95}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-bias={-0.0003}
+        shadow-camera-left={-18}
+        shadow-camera-right={18}
+        shadow-camera-top={18}
+        shadow-camera-bottom={-18}
+      />
 
       {area.id === "patio" && <Patio />}
       {area.id === "recepcion" && <Recepcion />}
       {area.id === "psicologia" && (
         <group>
-          <MurosSala piso="#d9c9e0" />
+          <MurosSala piso="#e9d5ff" />
           <Sillon x={-3} z={-2.2} color="#7a6db0" />
           <Sillon x={-3} z={1.4} color="#9a6fd0" />
           <Mesita x={3.4} z={-2} />
@@ -657,7 +680,7 @@ export default function TerapiaScene({
       )}
       {area.id === "fonoaudiologia" && (
         <group>
-          <MurosSala piso="#cfe0e8" ventana />
+          <MurosSala piso="#bfdbfe" ventana />
           <Mesita x={-3} z={-1} />
           <TelefonoJuguete x={-3} z={-1} />
           <Juguete x={-1.4} z={1.5} color="#ee8fbb" />
@@ -666,7 +689,7 @@ export default function TerapiaScene({
       )}
       {area.id === "terapia-ocupacional" && (
         <group>
-          <MurosSala piso="#e8dcc0" />
+          <MurosSala piso="#fef08a" />
           <Columpio x={-4} z={-1.5} />
           <Trampolin x={3.6} z={-2} />
           <Plasticinas x={2.6} z={2} />

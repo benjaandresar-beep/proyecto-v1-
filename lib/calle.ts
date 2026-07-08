@@ -31,7 +31,7 @@ export const CALLE_AREAS: Record<CalleArea, AreaDef> = {
   calle: {
     id: "calle",
     nombre: "La calle",
-    piso: "#cdc6ba",
+    piso: "#e7e5e4",
     entrada: [0, 3.4],
     frame: 10,
     limites: [9, 0, 4.2], // el niño camina por la vereda (no entra a la calzada)
@@ -49,7 +49,7 @@ export const CALLE_AREAS: Record<CalleArea, AreaDef> = {
   plaza: {
     id: "plaza",
     nombre: "La plaza",
-    piso: "#8fc46a",
+    piso: "#86efac",
     entrada: [0, 3.4],
     frame: 11,
     limites: [8.5, -4.4, 4.2],

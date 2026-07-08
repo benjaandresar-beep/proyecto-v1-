@@ -46,7 +46,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
   principal: {
     id: "principal",
     nombre: "Living",
-    piso: "#d9b38c",
+    piso: "#fcd34d",
     entrada: [0, 3.2],
     puertas: [
       { id: "a-patio", ...fondo(0), destino: "patio", label: "Patio" },
@@ -72,7 +72,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
   patio: {
     id: "patio",
     nombre: "Patio",
-    piso: "#8bbf6a",
+    piso: "#86efac",
     entrada: [0, 3.4],
     puertas: [{ id: "volver", ...fondo(-4.6), destino: "principal", label: "Volver adentro" }],
   },
@@ -80,7 +80,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
   "pasillo-der": {
     id: "pasillo-der",
     nombre: "Pasillo derecho",
-    piso: "#cdb79a",
+    piso: "#fde68a",
     entrada: [0, 3.4],
     puertas: [
       { id: "volver", ...fondo(-4.6), destino: "principal", label: "Volver al living" },
@@ -92,7 +92,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
   "hab-der-arriba": {
     id: "hab-der-arriba",
     nombre: "Habitación 1",
-    piso: "#d6c3a2",
+    piso: "#fde68a",
     entrada: [0, 3.2],
     puertas: [{ id: "volver", ...fondo(0), destino: "pasillo-der", label: "Volver al pasillo" }],
   },
@@ -100,7 +100,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
   "hab-der-abajo": {
     id: "hab-der-abajo",
     nombre: "Habitación 2",
-    piso: "#d6c3a2",
+    piso: "#fde68a",
     entrada: [0, 3.2],
     puertas: [{ id: "volver", ...fondo(0), destino: "pasillo-der", label: "Volver al pasillo" }],
   },
@@ -108,7 +108,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
   "pasillo-izq": {
     id: "pasillo-izq",
     nombre: "Pasillo izquierdo",
-    piso: "#cdb79a",
+    piso: "#fde68a",
     entrada: [0, 3.4],
     puertas: [
       { id: "volver", ...fondo(-4.6), destino: "principal", label: "Volver al living" },
@@ -119,7 +119,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
   "tu-habitacion": {
     id: "tu-habitacion",
     nombre: "Mi pieza",
-    piso: "#c9b6d6",
+    piso: "#d8b4fe",
     entrada: [0, 3.2],
     puertas: [{ id: "volver", ...fondo(0), destino: "pasillo-izq", label: "Volver al pasillo" }],
   },

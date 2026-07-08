@@ -9,6 +9,7 @@ import { Canvas, useFrame, useThree, ThreeEvent } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import CharacterMesh from "./CharacterMesh";
+import AutoSombras from "./AutoSombras";
 import { ChargeMap, EmotionId, EMOTIONS } from "@/lib/emotions";
 import { ExerciseAnimation } from "@/lib/exercises";
 import { AvatarConfig } from "@/lib/storage";
@@ -196,6 +197,16 @@ function NpcFamilia({
         polera={npc.polera}
         esAdulto={npc.esAdulto}
       />
+      {emocion && (
+        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.75, 0.07, 10, 28]} />
+          <meshStandardMaterial
+            color={EMOTIONS[emocion].color}
+            emissive={EMOTIONS[emocion].color}
+            emissiveIntensity={0.55}
+          />
+        </mesh>
+      )}
       {mostrar && (
         <Html
           position={[0, npc.esAdulto ? 3.1 : 2.5, 0]}
@@ -280,7 +291,7 @@ function Puerta3D({
       {/* marco */}
       <mesh position={[0, 1.1, 0]}>
         <boxGeometry args={[1.5, 2.2, 0.22]} />
-        <meshStandardMaterial color="#8a6240" flatShading />
+        <meshStandardMaterial color="#8a6240" />
       </mesh>
       {/* hueco oscuro detrás */}
       <mesh position={[0, 1.05, -0.02]}>
@@ -291,7 +302,7 @@ function Puerta3D({
       <group ref={panel} position={[-0.57, 0, 0.1]}>
         <mesh position={[0.57, 1.05, 0]}>
           <boxGeometry args={[1.08, 1.92, 0.09]} />
-          <meshStandardMaterial color="#b9824e" flatShading />
+          <meshStandardMaterial color="#b9824e" />
         </mesh>
         <mesh position={[1.0, 1.05, 0.08]}>
           <sphereGeometry args={[0.07, 8, 8]} />
@@ -337,35 +348,35 @@ function Perro({
         {/* cuerpo */}
         <mesh position={[0, 0.45, 0]}>
           <capsuleGeometry args={[0.28, 0.5, 4, 8]} />
-          <meshStandardMaterial color="#b98a52" flatShading />
+          <meshStandardMaterial color="#b98a52" />
         </mesh>
         {/* patas */}
         {([[-0.18, 0.18], [0.18, 0.18], [-0.18, -0.18], [0.18, -0.18]] as [number, number][]).map(
           ([x, z], i) => (
             <mesh key={i} position={[x, 0.12, z]}>
               <cylinderGeometry args={[0.07, 0.07, 0.24, 6]} />
-              <meshStandardMaterial color="#9c7242" flatShading />
+              <meshStandardMaterial color="#9c7242" />
             </mesh>
           )
         )}
         {/* cabeza */}
         <mesh position={[0, 0.62, 0.42]}>
           <sphereGeometry args={[0.26, 10, 10]} />
-          <meshStandardMaterial color="#b98a52" flatShading />
+          <meshStandardMaterial color="#b98a52" />
         </mesh>
         {/* hocico */}
         <mesh position={[0, 0.55, 0.66]}>
           <boxGeometry args={[0.16, 0.14, 0.16]} />
-          <meshStandardMaterial color="#7a5a32" flatShading />
+          <meshStandardMaterial color="#7a5a32" />
         </mesh>
         {/* orejas */}
         <mesh position={[-0.18, 0.82, 0.42]} rotation={[0, 0, 0.3]}>
           <boxGeometry args={[0.1, 0.22, 0.06]} />
-          <meshStandardMaterial color="#9c7242" flatShading />
+          <meshStandardMaterial color="#9c7242" />
         </mesh>
         <mesh position={[0.18, 0.82, 0.42]} rotation={[0, 0, -0.3]}>
           <boxGeometry args={[0.1, 0.22, 0.06]} />
-          <meshStandardMaterial color="#9c7242" flatShading />
+          <meshStandardMaterial color="#9c7242" />
         </mesh>
         {/* ojos */}
         <mesh position={[-0.1, 0.66, 0.62]}>
@@ -380,7 +391,7 @@ function Perro({
         <group ref={cola} position={[0, 0.55, -0.4]}>
           <mesh position={[0, 0.1, -0.12]} rotation={[-0.6, 0, 0]}>
             <cylinderGeometry args={[0.05, 0.03, 0.4, 6]} />
-            <meshStandardMaterial color="#b98a52" flatShading />
+            <meshStandardMaterial color="#b98a52" />
           </mesh>
         </group>
       </group>
@@ -418,19 +429,19 @@ function Gato({
       <group ref={grupo}>
       <mesh position={[0, 0.3, 0]}>
         <capsuleGeometry args={[0.18, 0.34, 4, 8]} />
-        <meshStandardMaterial color="#8a8a8a" flatShading />
+        <meshStandardMaterial color="#8a8a8a" />
       </mesh>
       <mesh position={[0, 0.5, 0.26]}>
         <sphereGeometry args={[0.18, 10, 10]} />
-        <meshStandardMaterial color="#8a8a8a" flatShading />
+        <meshStandardMaterial color="#8a8a8a" />
       </mesh>
       <mesh position={[-0.1, 0.66, 0.24]} rotation={[0, 0, 0.4]}>
         <coneGeometry args={[0.06, 0.14, 4]} />
-        <meshStandardMaterial color="#8a8a8a" flatShading />
+        <meshStandardMaterial color="#8a8a8a" />
       </mesh>
       <mesh position={[0.1, 0.66, 0.24]} rotation={[0, 0, -0.4]}>
         <coneGeometry args={[0.06, 0.14, 4]} />
-        <meshStandardMaterial color="#8a8a8a" flatShading />
+        <meshStandardMaterial color="#8a8a8a" />
       </mesh>
       <mesh position={[-0.07, 0.52, 0.42]}>
         <sphereGeometry args={[0.028, 6, 6]} />
@@ -443,7 +454,7 @@ function Gato({
       <group ref={cola} position={[0, 0.34, -0.28]}>
         <mesh position={[0, 0.16, 0]}>
           <cylinderGeometry args={[0.04, 0.03, 0.42, 6]} />
-          <meshStandardMaterial color="#8a8a8a" flatShading />
+          <meshStandardMaterial color="#8a8a8a" />
         </mesh>
       </group>
       </group>
@@ -456,12 +467,12 @@ function Tazon({ pos, color, lleno }: { pos: [number, number]; color: string; ll
     <group position={[pos[0], 0, pos[1]]}>
       <mesh position={[0, 0.06, 0]}>
         <cylinderGeometry args={[0.2, 0.16, 0.12, 12]} />
-        <meshStandardMaterial color="#5a8fb0" flatShading />
+        <meshStandardMaterial color="#5a8fb0" />
       </mesh>
       {lleno && (
         <mesh position={[0, 0.13, 0]}>
           <cylinderGeometry args={[0.16, 0.16, 0.04, 12]} />
-          <meshStandardMaterial color={color} flatShading />
+          <meshStandardMaterial color={color} />
         </mesh>
       )}
     </group>
@@ -473,11 +484,11 @@ function CasitaPerro({ pos }: { pos: [number, number] }) {
     <group position={[pos[0], 0, pos[1]]}>
       <mesh position={[0, 0.5, 0]}>
         <boxGeometry args={[1.3, 1, 1.2]} />
-        <meshStandardMaterial color="#a3673e" flatShading />
+        <meshStandardMaterial color="#a3673e" />
       </mesh>
       <mesh position={[0, 1.15, 0]} rotation={[0, Math.PI / 4, 0]}>
         <coneGeometry args={[1.05, 0.6, 4]} />
-        <meshStandardMaterial color="#7a4a2a" flatShading />
+        <meshStandardMaterial color="#7a4a2a" />
       </mesh>
       {/* entrada */}
       <mesh position={[0, 0.4, 0.61]}>
@@ -495,11 +506,11 @@ function Sofa({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.35, 0]}>
         <boxGeometry args={[2.4, 0.6, 1]} />
-        <meshStandardMaterial color="#c97b63" flatShading />
+        <meshStandardMaterial color="#c97b63" />
       </mesh>
       <mesh position={[0, 0.8, -0.42]}>
         <boxGeometry args={[2.4, 0.7, 0.22]} />
-        <meshStandardMaterial color="#b86a52" flatShading />
+        <meshStandardMaterial color="#b86a52" />
       </mesh>
     </group>
   );
@@ -510,7 +521,7 @@ function Tv({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.35, 0]}>
         <boxGeometry args={[1.6, 0.7, 0.45]} />
-        <meshStandardMaterial color="#9a7448" flatShading />
+        <meshStandardMaterial color="#9a7448" />
       </mesh>
       <mesh position={[0, 1.15, 0]}>
         <boxGeometry args={[1.4, 0.85, 0.1]} />
@@ -525,19 +536,19 @@ function Cama({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.3, 0]}>
         <boxGeometry args={[1.5, 0.4, 2.2]} />
-        <meshStandardMaterial color="#9a7448" flatShading />
+        <meshStandardMaterial color="#9a7448" />
       </mesh>
       <mesh position={[0, 0.55, 0]}>
         <boxGeometry args={[1.45, 0.2, 2.1]} />
-        <meshStandardMaterial color="#cfe3f0" flatShading />
+        <meshStandardMaterial color="#cfe3f0" />
       </mesh>
       <mesh position={[0, 0.62, -0.85]}>
         <boxGeometry args={[1.2, 0.22, 0.4]} />
-        <meshStandardMaterial color="#ffffff" flatShading />
+        <meshStandardMaterial color="#ffffff" />
       </mesh>
       <mesh position={[0, 0.5, 0.5]}>
         <boxGeometry args={[1.45, 0.16, 1.1]} />
-        <meshStandardMaterial color="#7fb0d6" flatShading />
+        <meshStandardMaterial color="#7fb0d6" />
       </mesh>
     </group>
   );
@@ -548,15 +559,15 @@ function Closet({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.9, 0]}>
         <boxGeometry args={[1.3, 1.8, 0.6]} />
-        <meshStandardMaterial color="#a37b52" flatShading />
+        <meshStandardMaterial color="#a37b52" />
       </mesh>
       <mesh position={[-0.32, 0.9, 0.31]}>
         <boxGeometry args={[0.58, 1.7, 0.04]} />
-        <meshStandardMaterial color="#8a6240" flatShading />
+        <meshStandardMaterial color="#8a6240" />
       </mesh>
       <mesh position={[0.32, 0.9, 0.31]}>
         <boxGeometry args={[0.58, 1.7, 0.04]} />
-        <meshStandardMaterial color="#8a6240" flatShading />
+        <meshStandardMaterial color="#8a6240" />
       </mesh>
     </group>
   );
@@ -567,15 +578,15 @@ function Planta({ x, z }: { x: number; z: number }) {
     <group position={[x, 0, z]}>
       <mesh position={[0, 0.25, 0]}>
         <cylinderGeometry args={[0.26, 0.32, 0.5, 10]} />
-        <meshStandardMaterial color="#c97b63" flatShading />
+        <meshStandardMaterial color="#c97b63" />
       </mesh>
       <mesh position={[0, 0.85, 0]}>
         <sphereGeometry args={[0.5, 10, 10]} />
-        <meshStandardMaterial color="#6fae7d" flatShading />
+        <meshStandardMaterial color="#6fae7d" />
       </mesh>
       <mesh position={[0.18, 1.1, 0.05]}>
         <sphereGeometry args={[0.32, 10, 10]} />
-        <meshStandardMaterial color="#7cbf8a" flatShading />
+        <meshStandardMaterial color="#7cbf8a" />
       </mesh>
     </group>
   );
@@ -603,7 +614,7 @@ function AudifonosObjeto({
       {/* velador */}
       <mesh position={[0, 0.4, 0]}>
         <boxGeometry args={[0.7, 0.8, 0.7]} />
-        <meshStandardMaterial color="#a37b52" flatShading />
+        <meshStandardMaterial color="#a37b52" />
       </mesh>
       {/* audífonos flotando con brillo */}
       <group ref={ref} position={[0, 0.9, 0]}>
@@ -644,17 +655,17 @@ function Shell({ area }: { area: AreaDef }) {
         {[-5.5, 5.5].map((x) => (
           <mesh key={x} position={[x, 0.5, 4.7]}>
             <boxGeometry args={[0.16, 1, 0.16]} />
-            <meshStandardMaterial color="#cfcfcf" flatShading />
+            <meshStandardMaterial color="#cfcfcf" />
           </mesh>
         ))}
         <mesh position={[0, 0.8, 4.7]}>
           <boxGeometry args={[12, 0.1, 0.1]} />
-          <meshStandardMaterial color="#cfcfcf" flatShading />
+          <meshStandardMaterial color="#cfcfcf" />
         </mesh>
         {Array.from({ length: 13 }, (_, i) => -6 + i).map((x) => (
           <mesh key={x} position={[x, 0.45, 4.7]}>
             <boxGeometry args={[0.07, 0.9, 0.07]} />
-            <meshStandardMaterial color="#dcdcdc" flatShading />
+            <meshStandardMaterial color="#dcdcdc" />
           </mesh>
         ))}
       </group>
@@ -723,7 +734,7 @@ function MueblesArea({ area, onObjeto }: { area: AreaDef; onObjeto: (c: "audifon
           {/* ropa en una silla */}
           <mesh position={[2, 0.5, 1.6]}>
             <boxGeometry args={[0.7, 0.1, 0.7]} />
-            <meshStandardMaterial color="#7fb0d6" flatShading />
+            <meshStandardMaterial color="#7fb0d6" />
           </mesh>
           <AudifonosObjeto pos={[-3.4, 1.4]} onTap={() => onObjeto("audifonos")} />
         </group>
@@ -742,13 +753,13 @@ function MueblesArea({ area, onObjeto }: { area: AreaDef; onObjeto: (c: "audifon
 // ---------- escena ----------
 
 const FONDO_AREA: Record<CasaArea, string> = {
-  principal: "#f3e3c3",
-  patio: "#bfe8f5",
-  "pasillo-der": "#efe0c4",
-  "hab-der-arriba": "#efe0c4",
-  "hab-der-abajo": "#efe0c4",
-  "pasillo-izq": "#efe0c4",
-  "tu-habitacion": "#e7ddf0",
+  principal: "#fde68a",
+  patio: "#bae6fd",
+  "pasillo-der": "#fef3c7",
+  "hab-der-arriba": "#fef3c7",
+  "hab-der-abajo": "#fef3c7",
+  "pasillo-izq": "#fef3c7",
+  "tu-habitacion": "#e9d5ff",
 };
 
 export default function CasaScene({
@@ -786,13 +797,25 @@ export default function CasaScene({
   }
 
   return (
-    <Canvas camera={{ position: [0, 6.8, 9.8], fov: 48 }} style={{ position: "absolute", inset: 0 }}>
+    <Canvas shadows camera={{ position: [0, 6.8, 9.8], fov: 48 }} style={{ position: "absolute", inset: 0 }}>
       <CameraRig onDistancia={(d) => setFactorEtiqueta(10 * (d / DIST_BASE))} />
-      <ambientLight intensity={area.id === "patio" ? 1 : 0.82} />
-      <directionalLight position={[5, 9, 4]} intensity={1.1} />
+      <AutoSombras />
+      <ambientLight intensity={area.id === "patio" ? 0.85 : 0.75} />
+      <directionalLight
+        position={[10, 15, 8]}
+        intensity={0.95}
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-bias={-0.0003}
+        shadow-camera-left={-18}
+        shadow-camera-right={18}
+        shadow-camera-top={18}
+        shadow-camera-bottom={-18}
+      />
 
       {/* color de fondo del cielo/ambiente */}
       <color attach="background" args={[FONDO_AREA[area.id]]} />
+      <fog attach="fog" args={[FONDO_AREA[area.id], 25, 60]} />
 
       <Shell area={area} />
       {/* superficie invisible para capturar clicks de caminar */}

@@ -29,7 +29,7 @@ export const ESCUELA_AREAS: Record<EscuelaArea, AreaDef> = {
   sala: {
     id: "sala",
     nombre: "Sala de clases",
-    piso: "#dcc89f",
+    piso: "#fcd34d",
     entrada: [0, 3.2],
     frame: 7.4,
     limites: [6, -3, 4.2],
@@ -47,7 +47,7 @@ export const ESCUELA_AREAS: Record<EscuelaArea, AreaDef> = {
   patio: {
     id: "patio",
     nombre: "Patio del colegio",
-    piso: "#9ccb6a",
+    piso: "#86efac",
     entrada: [0, -2.8],
     frame: 11,
     limites: [9.5, -4.4, 4.4],
