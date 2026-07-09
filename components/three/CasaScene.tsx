@@ -2,6 +2,8 @@
 
 // Escena 3D de la casa explorable. Renderiza el área actual (living, patio,
 // pasillos, habitaciones) con sus puertas animadas, mascotas y muebles.
+// El patio está de fiesta: asado con parrilla humeante, mesa con comida,
+// banderines y globos; los invitados llegan como NPC desde CasaGame3D.
 // El estado del juego y la navegación viven en CasaGame3D.
 
 import { useEffect, useRef, useState } from "react";
@@ -39,7 +41,7 @@ interface SceneProps {
   abrumado: boolean;
   animacionEjercicio: ExerciseAnimation | null;
   audifonos: boolean;
-  /** familia con burbujas (solo en el living) */
+  /** personajes con burbujas (familia en el living, invitados del asado en el patio) */
   npcs: Npc3D[];
   burbujas: Record<string, EmotionId | undefined>;
   objetivo: [number, number];
@@ -499,6 +501,157 @@ function CasitaPerro({ pos }: { pos: [number, number] }) {
   );
 }
 
+// ---------- fiesta en el patio (asado) ----------
+
+function Parrilla({ pos }: { pos: [number, number] }) {
+  const humo = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    if (!humo.current) return;
+    humo.current.children.forEach((m, i) => {
+      const t = (state.clock.elapsedTime * 0.35 + i / 3) % 1;
+      m.position.set(Math.sin((t + i) * 5) * 0.15, 1.05 + t * 1.7, 0);
+      m.scale.setScalar(0.14 + t * 0.26);
+      const mat = (m as THREE.Mesh).material as THREE.MeshStandardMaterial;
+      mat.opacity = 0.55 * (1 - t);
+    });
+  });
+  return (
+    <group position={[pos[0], 0, pos[1]]}>
+      {/* patas */}
+      {([[-0.55, -0.25], [0.55, -0.25], [-0.55, 0.25], [0.55, 0.25]] as [number, number][]).map(
+        ([x, z], i) => (
+          <mesh key={i} position={[x, 0.4, z]}>
+            <cylinderGeometry args={[0.05, 0.05, 0.8, 6]} />
+            <meshStandardMaterial color="#4a4a4a" />
+          </mesh>
+        )
+      )}
+      {/* fuente de la parrilla */}
+      <mesh position={[0, 0.85, 0]}>
+        <boxGeometry args={[1.5, 0.32, 0.75]} />
+        <meshStandardMaterial color="#5b5b5b" />
+      </mesh>
+      {/* carbón encendido */}
+      <mesh position={[0, 1.0, 0]}>
+        <boxGeometry args={[1.3, 0.06, 0.6]} />
+        <meshStandardMaterial color="#e0632f" emissive="#e0632f" emissiveIntensity={0.8} />
+      </mesh>
+      {/* carnes y choripanes sobre la rejilla */}
+      <mesh position={[-0.35, 1.08, 0.1]}>
+        <boxGeometry args={[0.4, 0.09, 0.3]} />
+        <meshStandardMaterial color="#8a4a2b" />
+      </mesh>
+      <mesh position={[0.25, 1.08, -0.12]}>
+        <boxGeometry args={[0.34, 0.09, 0.26]} />
+        <meshStandardMaterial color="#a35a34" />
+      </mesh>
+      <mesh position={[0.35, 1.07, 0.18]} rotation={[0, 0.5, Math.PI / 2]}>
+        <cylinderGeometry args={[0.05, 0.05, 0.32, 8]} />
+        <meshStandardMaterial color="#b04a3a" />
+      </mesh>
+      {/* humo que sube */}
+      <group ref={humo}>
+        {[0, 1, 2].map((i) => (
+          <mesh key={i}>
+            <sphereGeometry args={[1, 8, 8]} />
+            <meshStandardMaterial color="#e8e8e8" transparent opacity={0.5} depthWrite={false} />
+          </mesh>
+        ))}
+      </group>
+    </group>
+  );
+}
+
+function MesaFiesta({ pos }: { pos: [number, number] }) {
+  return (
+    <group position={[pos[0], 0, pos[1]]}>
+      {/* patas */}
+      {([[-1.0, -0.4], [1.0, -0.4], [-1.0, 0.4], [1.0, 0.4]] as [number, number][]).map(
+        ([x, z], i) => (
+          <mesh key={i} position={[x, 0.36, z]}>
+            <cylinderGeometry args={[0.05, 0.05, 0.72, 6]} />
+            <meshStandardMaterial color="#8a6240" />
+          </mesh>
+        )
+      )}
+      {/* mantel */}
+      <mesh position={[0, 0.76, 0]}>
+        <boxGeometry args={[2.4, 0.1, 1.1]} />
+        <meshStandardMaterial color="#f28d7c" />
+      </mesh>
+      {/* platos */}
+      {[-0.7, 0.1, 0.8].map((x) => (
+        <mesh key={x} position={[x, 0.84, 0.15]}>
+          <cylinderGeometry args={[0.16, 0.16, 0.04, 12]} />
+          <meshStandardMaterial color="#ffffff" />
+        </mesh>
+      ))}
+      {/* jarra de jugo */}
+      <mesh position={[-0.2, 0.98, -0.25]}>
+        <cylinderGeometry args={[0.12, 0.14, 0.34, 10]} />
+        <meshStandardMaterial color="#f2994a" />
+      </mesh>
+      {/* fuente con ensalada */}
+      <mesh position={[0.55, 0.88, -0.25]}>
+        <cylinderGeometry args={[0.2, 0.15, 0.12, 12]} />
+        <meshStandardMaterial color="#67c08a" />
+      </mesh>
+      {/* pancitos */}
+      <mesh position={[-0.75, 0.86, -0.2]}>
+        <sphereGeometry args={[0.09, 8, 8]} />
+        <meshStandardMaterial color="#d9a35e" />
+      </mesh>
+      <mesh position={[-0.92, 0.86, -0.28]}>
+        <sphereGeometry args={[0.09, 8, 8]} />
+        <meshStandardMaterial color="#d9a35e" />
+      </mesh>
+    </group>
+  );
+}
+
+/** guirnalda de banderines colgada en el muro de la casa */
+function Banderines() {
+  const colores = ["#e0503f", "#f2c24b", "#67c08a", "#4a9fd6", "#9a6fd0", "#ee8fbb"];
+  const n = 13;
+  return (
+    <group>
+      {Array.from({ length: n }, (_, i) => {
+        const t = i / (n - 1);
+        const x = -6 + t * 12;
+        const y = 3.5 - Math.sin(t * Math.PI) * 0.55;
+        return (
+          <mesh key={i} position={[x, y, -4.8]} rotation={[0, 0, Math.PI]}>
+            <coneGeometry args={[0.16, 0.36, 3]} />
+            <meshStandardMaterial color={colores[i % colores.length]} />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}
+
+function Globo({ pos, color, fase = 0 }: { pos: [number, number]; color: string; fase?: number }) {
+  const ref = useRef<THREE.Group>(null);
+  useFrame((state) => {
+    if (ref.current)
+      ref.current.position.y = 1.9 + Math.sin(state.clock.elapsedTime * 1.4 + fase) * 0.12;
+  });
+  return (
+    <group position={[pos[0], 0, pos[1]]}>
+      <group ref={ref} position={[0, 1.9, 0]}>
+        <mesh>
+          <sphereGeometry args={[0.28, 10, 10]} />
+          <meshStandardMaterial color={color} />
+        </mesh>
+        <mesh position={[0, -0.95, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 1.3, 4]} />
+          <meshStandardMaterial color="#9a9a9a" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
 // ---------- muebles / objetos ----------
 
 function Sofa({ x, z }: { x: number; z: number }) {
@@ -719,9 +872,17 @@ function MueblesArea({ area, onObjeto }: { area: AreaDef; onObjeto: (c: "audifon
         </group>
       );
     case "patio":
+      // rincón de las mascotas a la izquierda; la fiesta ocupa el resto
       return (
         <group>
-          <CasitaPerro pos={[-3.4, -2.2]} />
+          <CasitaPerro pos={[-5.8, -3]} />
+          <Parrilla pos={[4.9, -3.5]} />
+          <MesaFiesta pos={[0.8, -3.4]} />
+          <Banderines />
+          <Globo pos={[-6.3, -4.3]} color="#e0503f" />
+          <Globo pos={[6.3, -4.3]} color="#f2c24b" fase={1.3} />
+          <Globo pos={[-5.5, 4.5]} color="#4a9fd6" fase={2.1} />
+          <Globo pos={[5.5, 4.5]} color="#9a6fd0" fase={0.7} />
         </group>
       );
     case "pasillo-izq":
@@ -831,7 +992,7 @@ export default function CasaScene({
         <Puerta3D key={p.id} puerta={p} abriendo={puertaAbriendo === p.id} onPuerta={onPuerta} />
       ))}
 
-      {/* familia (solo living) */}
+      {/* personajes: familia en el living, invitados del asado en el patio */}
       {npcs.map((npc) => (
         <NpcFamilia
           key={npc.id}
@@ -843,17 +1004,17 @@ export default function CasaScene({
         />
       ))}
 
-      {/* mascotas y comida (patio) */}
+      {/* mascotas y comida (rincón izquierdo del patio, lejos de la parrilla) */}
       {area.id === "patio" && (
         <>
-          <Perro pos={[-1.4, -1]} alimentado={perroAlimentado} onTap={() => onMascota("perro")} />
-          <Gato pos={[2.4, -0.4]} alimentado={gatoAlimentado} onTap={() => onMascota("gato")} />
-          <Tazon pos={[-2.4, 0.2]} color="#b5793f" lleno={perroAlimentado} />
-          <Tazon pos={[-1.7, 0.4]} color="#4a9fd6" lleno />
+          <Perro pos={[-4.6, -1.6]} alimentado={perroAlimentado} onTap={() => onMascota("perro")} />
+          <Gato pos={[-5.5, 0.9]} alimentado={gatoAlimentado} onTap={() => onMascota("gato")} />
+          <Tazon pos={[-3.7, -0.9]} color="#b5793f" lleno={perroAlimentado} />
+          <Tazon pos={[-3.1, -0.5]} color="#4a9fd6" lleno />
           {/* tazón de comida del gato */}
-          <Tazon pos={[2.4, 0.5]} color="#c98f3d" lleno={gatoAlimentado} />
+          <Tazon pos={[-5.4, 1.9]} color="#c98f3d" lleno={gatoAlimentado} />
           {mostrarEtiquetas && (
-            <Html position={[-1.4, 2, -1]} center distanceFactor={factorEtiqueta} zIndexRange={[12, 0]}
+            <Html position={[-4.6, 2, -1.6]} center distanceFactor={factorEtiqueta} zIndexRange={[12, 0]}
               style={{ pointerEvents: "none", textAlign: "center" }}>
               <div className="npc-nombre">🐶 Firulais</div>
             </Html>

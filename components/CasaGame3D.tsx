@@ -5,12 +5,21 @@
 // regulación (carga, burbujas, reguladores, figura de apoyo, crisis) en el
 // living, y añade exploración: alimentar al perro en el patio y recoger los
 // audífonos en tu pieza.
+// El patio tiene un sub-contexto: una fiesta tipo asado con invitados que
+// traen sus propias emociones (más gente y más estímulos que el living).
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Npc3D, Orbe } from "@/components/three/CasaScene";
-import { CASA_AREAS, CasaArea, PuertaDef } from "@/lib/casa";
+import {
+  BURBUJAS_FIESTA,
+  CASA_AREAS,
+  CasaArea,
+  INVITADOS_FIESTA,
+  LINEAS_FIESTA,
+  PuertaDef,
+} from "@/lib/casa";
 import { CONTEXTOS } from "@/lib/contexts";
 import {
   ChargeMap,
@@ -52,6 +61,12 @@ const BURBUJAS_LIVING: Record<string, EmotionId> = {
   nico: "alegria",
 };
 
+// invitados del asado en el patio (sub-contexto fiesta)
+const INVITADOS_IDS = INVITADOS_FIESTA.map((i) => i.id);
+const POS_FIESTA: Record<string, [number, number]> = Object.fromEntries(
+  INVITADOS_FIESTA.map((i) => [i.id, i.pos] as [string, [number, number]])
+);
+
 function npcDef(id: string): Npc3D {
   const base = id === FIGURA.id ? FIGURA : CASA.npcs.find((n) => n.id === id)!;
   return {
@@ -90,7 +105,10 @@ export default function CasaGame3D() {
   const area = CASA_AREAS[areaId];
 
   const [carga, setCarga] = useState<ChargeMap>({});
-  const [burbujas, setBurbujas] = useState<Record<string, EmotionId | undefined>>(BURBUJAS_LIVING);
+  const [burbujas, setBurbujas] = useState<Record<string, EmotionId | undefined>>({
+    ...BURBUJAS_LIVING,
+    ...BURBUJAS_FIESTA,
+  });
   const [objetivo, setObjetivo] = useState<[number, number]>([0, 3.2]);
   const [dialogo, setDialogo] = useState<Dialogo | null>(null);
   const [crisis, setCrisis] = useState<Crisis>("no");
@@ -111,6 +129,7 @@ export default function CasaGame3D() {
 
   const ultimaInteraccion = useRef(Date.now());
   const ocupadoRef = useRef(false);
+  const fiestaAvisadaRef = useRef(false);
   const alLlegarRef = useRef<(() => void) | null>(null);
   const audifonosRef = useRef(false);
   audifonosRef.current = audifonos;
@@ -122,10 +141,21 @@ export default function CasaGame3D() {
   ocupadoRef.current =
     dialogo !== null || nubes || crisis !== "no" || animEjercicio !== null || transicion || puertaPrompt !== null;
 
-  const npcs3d = useMemo<Npc3D[]>(
-    () => (areaId === "principal" ? [...FAMILIA_IDS, FIGURA.id].map(npcDef) : []),
-    [areaId]
-  );
+  const npcs3d = useMemo<Npc3D[]>(() => {
+    if (areaId === "principal") return [...FAMILIA_IDS, FIGURA.id].map(npcDef);
+    if (areaId === "patio")
+      return INVITADOS_FIESTA.map((i) => ({
+        id: i.id,
+        nombre: i.nombre,
+        piel: i.piel,
+        pelo: i.peloEstilo,
+        colorPelo: i.colorPelo,
+        polera: i.polera,
+        pos: i.pos,
+        esAdulto: i.esAdulto,
+      }));
+    return [];
+  }, [areaId]);
 
   const rol = FIGURA.rolCorto;
 
@@ -162,20 +192,29 @@ export default function CasaGame3D() {
     return () => clearInterval(t);
   }, [crisis]);
 
-  // Migración de burbujas (solo living) + ruido doméstico periódico
+  // Migración de burbujas (living y fiesta del patio) + ruido doméstico periódico
   useEffect(() => {
     const intervaloMs = clinico.intervaloEventosSeg * 1000;
 
     const reloj = setInterval(() => {
-      if (ocupadoRef.current || areaRef.current !== "principal") return;
+      const grupo =
+        areaRef.current === "principal"
+          ? FAMILIA_IDS
+          : areaRef.current === "patio"
+            ? INVITADOS_IDS
+            : null;
+      if (ocupadoRef.current || !grupo) return;
       if (Date.now() - ultimaInteraccion.current >= intervaloMs) {
         ultimaInteraccion.current = Date.now();
         setBurbujas((prev) => {
-          const emociones = Object.values(prev).filter(Boolean) as EmotionId[];
-          const ids = [...FAMILIA_IDS].sort(() => Math.random() - 0.5);
-          const nuevas: Record<string, EmotionId | undefined> = {};
+          const emociones = grupo.map((id) => prev[id]).filter(Boolean) as EmotionId[];
+          const orden = [...grupo].sort(() => Math.random() - 0.5);
+          const nuevas = { ...prev };
+          grupo.forEach((id) => {
+            nuevas[id] = undefined;
+          });
           emociones.forEach((e, i) => {
-            if (ids[i]) nuevas[ids[i]] = e;
+            if (orden[i]) nuevas[orden[i]] = e;
           });
           return nuevas;
         });
@@ -187,11 +226,16 @@ export default function CasaGame3D() {
       setRuido(true);
       setTimeout(() => setRuido(false), 1200);
       const protegido = audifonosRef.current;
+      const enFiesta = areaRef.current === "patio";
       setCarga((c) => sumarCarga(c, "miedo", protegido ? CARGA_RUIDO / 2 : CARGA_RUIDO));
       setAviso(
         protegido
-          ? "¡Ruido en la casa! Los audífonos te protegieron un poco. 🎧"
-          : "¡La casa se puso ruidosa de repente! Tu cuerpo lo sintió."
+          ? enFiesta
+            ? "¡La música de la fiesta sonó fuerte! Los audífonos te protegieron un poco. 🎧"
+            : "¡Ruido en la casa! Los audífonos te protegieron un poco. 🎧"
+          : enFiesta
+            ? "¡La música de la fiesta sonó muy fuerte! Tu cuerpo lo sintió."
+            : "¡La casa se puso ruidosa de repente! Tu cuerpo lo sintió."
       );
       setTimeout(() => setAviso(null), 3000);
     }, intervaloMs);
@@ -249,6 +293,11 @@ export default function CasaGame3D() {
       setAreaId(dest.id);
       setObjetivo(dest.entrada);
       setPuertaAbriendo(null);
+      if (dest.id === "patio" && !fiestaAvisadaRef.current) {
+        fiestaAvisadaRef.current = true;
+        setAviso("🎉 ¡Hay un asado en el patio! Saluda a los invitados y mira cómo se sienten.");
+        setTimeout(() => setAviso(null), 4500);
+      }
     }, 650);
     setTimeout(() => setTransicion(false), 1050);
   }
@@ -257,10 +306,10 @@ export default function CasaGame3D() {
     if (ocupadoRef.current) return;
     marcarInteraccion();
     if (cual === "perro") {
-      setObjetivo([-1.4, 0.6]);
+      setObjetivo([-3.9, -0.6]);
       alLlegarRef.current = () => setDialogo({ tipo: "perro" });
     } else {
-      setObjetivo([2.4, 0.8]);
+      setObjetivo([-4.7, 1.9]);
       alLlegarRef.current = () => setDialogo({ tipo: "gato" });
     }
   }
@@ -303,10 +352,11 @@ export default function CasaGame3D() {
 
   function escucharNpc(npcId: string, nombre: string, emocion: EmotionId) {
     setDialogo(null);
+    const grupo = FAMILIA_IDS.includes(npcId) ? FAMILIA_IDS : INVITADOS_IDS;
     setBurbujas((b) => ({ ...b, [npcId]: undefined }));
     setTimeout(() => {
       setBurbujas((prev) => {
-        const libres = FAMILIA_IDS.filter((id) => !prev[id]);
+        const libres = grupo.filter((id) => !prev[id]);
         if (libres.length === 0) return prev;
         const elegido = libres[Math.floor(Math.random() * libres.length)];
         const pool: EmotionId[] =
@@ -317,7 +367,7 @@ export default function CasaGame3D() {
 
     const info = EMOTIONS[emocion];
     if (info.displacentera) {
-      const pos = POS_LIVING[npcId];
+      const pos = POS_LIVING[npcId] ?? POS_FIESTA[npcId];
       setOrbe({ key: Date.now(), color: info.color, desde: [pos[0], 1.8, pos[1]], emocion, nombre });
     } else if (emocion === "calma") {
       setCarga((c) => reducirTotal(c, ALIVIO_AMIGO_CALMA));
@@ -471,7 +521,11 @@ export default function CasaGame3D() {
         </div>
       )}
 
-      {ruido && <div className="ruido-fuerte">📺 ¡RUIDO EN CASA!</div>}
+      {ruido && (
+        <div className="ruido-fuerte">
+          {areaId === "patio" ? "🎶 ¡MÚSICA FUERTE!" : "📺 ¡RUIDO EN CASA!"}
+        </div>
+      )}
 
       {animEjercicio && (
         <div className="banner-ejercicio">
@@ -544,7 +598,9 @@ export default function CasaGame3D() {
         <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.nombre}</span>
-            <p className="dialogo-texto">«{CASA.lineas[dialogo.emocion]}»</p>
+            <p className="dialogo-texto">
+              «{(INVITADOS_IDS.includes(dialogo.npcId) ? LINEAS_FIESTA : CASA.lineas)[dialogo.emocion]}»
+            </p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}

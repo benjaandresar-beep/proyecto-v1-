@@ -3,6 +3,11 @@
 // pasillo derecho, pasillo izquierdo), y las áreas a las que llevan.
 // Cada área usa todo el escenario; "arriba/izquierda/derecha" es la narrativa
 // de navegación entre puertas, no la posición en pantalla.
+// El patio tiene un sub-contexto: una fiesta tipo asado con invitados que
+// traen sus propias emociones (misma mecánica de burbujas que el living).
+
+import { EmotionId } from "./emotions";
+import { AvatarConfig } from "./storage";
 
 export type CasaArea =
   | "principal"
@@ -49,7 +54,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
     piso: "#fcd34d",
     entrada: [0, 3.2],
     puertas: [
-      { id: "a-patio", ...fondo(0), destino: "patio", label: "Patio" },
+      { id: "a-patio", ...fondo(0), destino: "patio", label: "Patio (¡hay asado!)" },
       {
         id: "a-der",
         pos: [6.2, -0.5],
@@ -71,7 +76,7 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
 
   patio: {
     id: "patio",
-    nombre: "Patio",
+    nombre: "Patio — ¡Asado familiar! 🎉",
     piso: "#86efac",
     entrada: [0, 3.4],
     puertas: [{ id: "volver", ...fondo(-4.6), destino: "principal", label: "Volver adentro" }],
@@ -123,4 +128,49 @@ export const CASA_AREAS: Record<CasaArea, AreaDef> = {
     entrada: [0, 3.2],
     puertas: [{ id: "volver", ...fondo(0), destino: "pasillo-izq", label: "Volver al pasillo" }],
   },
+};
+
+// ---------- sub-contexto del patio: fiesta tipo asado ----------
+// Invitados con sus emociones: la misma mecánica de burbujas del living,
+// pero con más gente, música y estímulos propios de una celebración.
+
+export interface InvitadoFiesta {
+  id: string;
+  nombre: string;
+  piel: string;
+  colorPelo: string;
+  peloEstilo: AvatarConfig["pelo"];
+  polera: string;
+  /** posición en el patio [x, z] */
+  pos: [number, number];
+  esAdulto?: boolean;
+}
+
+export const INVITADOS_FIESTA: InvitadoFiesta[] = [
+  // el parrillero, junto a la parrilla
+  { id: "rafa", nombre: "Tío Rafa", piel: "#c98e5f", colorPelo: "#2b2b2b", peloEstilo: "corto", polera: "#e0503f", pos: [3.9, -2.3], esAdulto: true },
+  { id: "norma", nombre: "Abuela Norma", piel: "#e8b88a", colorPelo: "#c9c9c9", peloEstilo: "coleta", polera: "#7a6db0", pos: [-0.8, -2.2], esAdulto: true },
+  { id: "lila", nombre: "Tía Lila", piel: "#9c6a43", colorPelo: "#2b2b2b", peloEstilo: "largo", polera: "#9a6fd0", pos: [-2.6, -0.7], esAdulto: true },
+  { id: "vale", nombre: "Vale", piel: "#f5d3b3", colorPelo: "#d6593f", peloEstilo: "largo", polera: "#56c5c5", pos: [2.2, -0.5] },
+  { id: "max", nombre: "Max", piel: "#e8b88a", colorPelo: "#c98f3d", peloEstilo: "corto", polera: "#f2994a", pos: [-0.9, 1] },
+  { id: "seba", nombre: "Primo Seba", piel: "#e8b88a", colorPelo: "#5b4232", peloEstilo: "rizado", polera: "#4a9fd6", pos: [3.7, 1.4] },
+];
+
+/** una burbuja por invitado: las 6 emociones del juego repartidas en la fiesta */
+export const BURBUJAS_FIESTA: Record<string, EmotionId> = {
+  rafa: "alegria",
+  norma: "tristeza",
+  lila: "calma",
+  vale: "verguenza",
+  max: "miedo",
+  seba: "enojo",
+};
+
+export const LINEAS_FIESTA: Record<EmotionId, string> = {
+  enojo: "¡Me sacaron el último choripán justo cuando lo iba a comer!",
+  tristeza: "Mi mejor amiga no pudo venir al asado…",
+  verguenza: "Se me cayó la bebida encima y todos me miraron.",
+  miedo: "Hay mucha gente y mucho ruido… no conozco a todos.",
+  alegria: "¡El asado está quedando delicioso! ¿Quieres probar un pedacito?",
+  calma: "Sentémonos un ratito a mirar cómo sube el humito.",
 };
