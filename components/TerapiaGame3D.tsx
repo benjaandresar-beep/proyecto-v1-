@@ -21,6 +21,7 @@ import {
   BURBUJAS_RECEPCION,
   PersonajeTerapia,
 } from "@/lib/terapia";
+import { elegirLinea } from "@/lib/dialogos";
 import {
   ChargeMap,
   CHARGE_MAX,
@@ -87,7 +88,7 @@ const PERSONAJES: Record<string, PersonajeTerapia> = {
 type FiguraActual = { nombre: string; rol: string; frasePresencia: string };
 
 type Dialogo =
-  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
+  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId; linea: string }
   | { tipo: "figura-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise };
@@ -251,7 +252,13 @@ export default function TerapiaGame3D() {
         });
         setDialogo({ tipo: "figura-apertura" });
       } else if (emocion) {
-        setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
+        setDialogo({
+          tipo: "npc",
+          npcId: id,
+          nombre: npc.nombre,
+          emocion,
+          linea: elegirLinea(LINEAS_TERAPIA, emocion, "terapia"),
+        });
       } else if (persona?.esAdulto) {
         setAviso(`${npc.nombre} espera tranquila y te sonríe.`);
         setTimeout(() => setAviso(null), 2500);
@@ -482,7 +489,7 @@ export default function TerapiaGame3D() {
         <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.nombre}</span>
-            <p className="dialogo-texto">«{LINEAS_TERAPIA[dialogo.emocion]}»</p>
+            <p className="dialogo-texto">«{dialogo.linea}»</p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}

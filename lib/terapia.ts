@@ -187,14 +187,8 @@ export const TERAPEUTAS: Record<string, PersonajeTerapia> = {
   },
 };
 
-export const LINEAS_TERAPIA: Record<EmotionId, string> = {
-  enojo: "¡No quería dejar el juego que estaba armando!",
-  tristeza: "Echo de menos a mi mamá mientras espero…",
-  verguenza: "Me da vergüenza cuando me toca hablar en la sesión.",
-  miedo: "Entrar a una sala nueva me pone nervioso.",
-  alegria: "¡Hoy toca jugar con plasticina en T.O.!",
-  calma: "Respiremos juntos un ratito mientras esperamos.",
-};
+// varias frases por emoción; ver lib/dialogos.ts
+export { LINEAS_TERAPIA } from "./dialogos";
 
 export const BURBUJAS_RECEPCION: Record<string, EmotionId> = {
   benja: "enojo",

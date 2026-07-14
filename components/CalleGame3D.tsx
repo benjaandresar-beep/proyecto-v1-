@@ -22,6 +22,7 @@ import {
   PLAZA_BURBUJAS,
   PLAZA_LINEAS,
 } from "@/lib/calle";
+import { elegirLinea } from "@/lib/dialogos";
 import {
   ChargeMap,
   CHARGE_MAX,
@@ -88,7 +89,7 @@ function plazaNpc(id: string): Npc3D {
 }
 
 type Dialogo =
-  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
+  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId; linea: string }
   | { tipo: "figura-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise };
@@ -246,7 +247,14 @@ export default function CalleGame3D() {
     const emocion = burbujas[id];
     alLlegarRef.current = () => {
       if (id === CALLE_FIGURA.id) setDialogo({ tipo: "figura-apertura" });
-      else if (emocion) setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
+      else if (emocion)
+        setDialogo({
+          tipo: "npc",
+          npcId: id,
+          nombre: npc.nombre,
+          emocion,
+          linea: elegirLinea(lineas, emocion, enPlaza ? "plaza" : "calle"),
+        });
       else {
         setAviso(`${npc.nombre} dice: «¡Hola! ¿Jugamos un rato?»`);
         setTimeout(() => setAviso(null), 2500);
@@ -480,7 +488,7 @@ export default function CalleGame3D() {
         <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.nombre}</span>
-            <p className="dialogo-texto">«{lineas[dialogo.emocion]}»</p>
+            <p className="dialogo-texto">«{dialogo.linea}»</p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}

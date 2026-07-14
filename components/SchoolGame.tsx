@@ -33,6 +33,7 @@ import {
   RESPAWN_BURBUJA_MS,
   sumarCarga,
 } from "@/lib/school";
+import { elegirLinea } from "@/lib/dialogos";
 import { storage } from "@/lib/storage";
 
 // Personajes compartidos (lib/school.ts) + posiciones 2D en porcentaje de la escena
@@ -57,7 +58,7 @@ const COMPANEROS: NpcDef[] = COMPANEROS_BASE.map((c) => ({ ...c, ...POSICIONES_2
 const PROFE: NpcDef = { ...PROFE_BASE, ...POSICIONES_2D.profe };
 
 type Dialogo =
-  | { tipo: "npc"; npc: NpcDef; emocion: EmotionId }
+  | { tipo: "npc"; npc: NpcDef; emocion: EmotionId; linea: string }
   | { tipo: "profe-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise };
@@ -194,7 +195,7 @@ export default function SchoolGame() {
       if (npc.id === "profe") {
         setDialogo({ tipo: "profe-apertura" });
       } else if (emocion) {
-        setDialogo({ tipo: "npc", npc, emocion });
+        setDialogo({ tipo: "npc", npc, emocion, linea: elegirLinea(LINEAS_NPC, emocion, "escuela") });
       } else {
         setAviso(`${npc.nombre} dice: «¡Hola! ¿Jugamos al recreo?»`);
         setTimeout(() => setAviso(null), 2500);
@@ -411,7 +412,7 @@ export default function SchoolGame() {
         <div className="velo" onClick={(e) => e.stopPropagation()}>
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.npc.nombre}</span>
-            <p className="dialogo-texto">«{LINEAS_NPC[dialogo.emocion]}»</p>
+            <p className="dialogo-texto">«{dialogo.linea}»</p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}

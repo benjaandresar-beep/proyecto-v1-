@@ -381,8 +381,10 @@ a      { color: var(--acento-oscuro); }
   font-family: inherit;
 }
 
+/* abajo al centro, sobre el banner de ejercicio, para no tapar
+   el botón de herramientas ni los rótulos superiores */
 .aviso-carga {
-  position: absolute; left: 50%; top: 12px;
+  position: absolute; left: 50%; bottom: 92px;
   transform: translateX(-50%); z-index: 15;
   background: rgba(255,255,255,0.95);
   border: 2px solid var(--rojo); color: var(--rojo);

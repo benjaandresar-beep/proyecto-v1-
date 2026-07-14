@@ -1,6 +1,7 @@
 // Contenido y reglas compartidas del contexto Escuela (usado por la escena 2D y la 3D).
 // Los textos y pesos son provisionales: los valida el responsable clínico (sección 10).
 
+import { LINEAS_ESCUELA } from "./dialogos";
 import { ChargeMap, CHARGE_MAX, DISPLACENTERAS, EmotionId, totalCharge } from "./emotions";
 import { AvatarConfig } from "./storage";
 
@@ -44,14 +45,8 @@ export const BURBUJAS_INICIALES: Record<string, EmotionId> = {
   diego: "alegria",
 };
 
-export const LINEAS_NPC: Record<EmotionId, string> = {
-  enojo: "¡Me rompieron mi dibujo! ¡Estoy muy enojado!",
-  tristeza: "Nadie quiso jugar conmigo en el recreo…",
-  verguenza: "Me equivoqué leyendo en voz alta y todos me miraron.",
-  miedo: "La prueba de mañana me tiene muy nervioso…",
-  alegria: "¡Hoy traje mi juguete favorito! ¿Quieres verlo después?",
-  calma: "¿Nos sentamos un ratito juntos? Respiremos tranquilos.",
-};
+// varias frases por emoción; ver lib/dialogos.ts
+export const LINEAS_NPC = LINEAS_ESCUELA;
 
 // Pesos internos provisionales, a calibrar con el responsable clínico
 export const CARGA_POR_BURBUJA = 18;

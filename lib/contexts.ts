@@ -2,6 +2,7 @@
 // Escuela = MVP (4.1); Casa (4.2) y Calle (4.3) = Fase 2.
 // Textos y personajes provisionales: los valida el responsable clínico.
 
+import { LINEAS_CALLE, LINEAS_CASA, LineasPool } from "./dialogos";
 import { EmotionId } from "./emotions";
 import {
   BURBUJAS_INICIALES,
@@ -27,7 +28,7 @@ export interface ContextDef {
   npcs: NpcBase[];
   figura: FiguraApoyo;
   burbujasIniciales: Record<string, EmotionId>;
-  lineas: Record<EmotionId, string>;
+  lineas: LineasPool;
   /** posición [x, z] de cada personaje (id del NPC o de la figura) */
   posiciones: Record<string, [number, number]>;
   evento: { titulo: string; aviso: string };
@@ -54,15 +55,6 @@ const FAMILIA: NpcBase[] = [
   { id: "max", nombre: "Max", piel: "#e8b88a", colorPelo: "#c98f3d", peloEstilo: "corto", polera: "#f2994a" },
 ];
 
-const LINEAS_CASA: Record<EmotionId, string> = {
-  enojo: "¡Me cambiaron el canal justo en lo mejor!",
-  tristeza: "Se canceló el paseo que esperaba toda la semana…",
-  verguenza: "Boté el vaso de jugo en la mesa y todos miraron.",
-  miedo: "Hay un ruido raro en la casa y no sé qué es…",
-  alegria: "¡Vamos a hacer galletas! ¿Me ayudas a mezclar?",
-  calma: "¿Miramos las nubes por la ventana un ratito?",
-};
-
 // ---------- Calle (4.3): estímulos urbanos, transeúntes, sobrecarga sensorial ----------
 
 const TRANSEUNTES: NpcBase[] = [
@@ -73,15 +65,6 @@ const TRANSEUNTES: NpcBase[] = [
   { id: "leo", nombre: "Leo", piel: "#e8b88a", colorPelo: "#d6593f", peloEstilo: "rizado", polera: "#f2c24b" },
   { id: "ema", nombre: "Ema", piel: "#f5d3b3", colorPelo: "#2b2b2b", peloEstilo: "coleta", polera: "#9a6fd0" },
 ];
-
-const LINEAS_CALLE: Record<EmotionId, string> = {
-  enojo: "¡Esa bicicleta casi me pasa por encima!",
-  tristeza: "Se me fue la micro y voy a llegar tarde…",
-  verguenza: "Me tropecé en la esquina delante de todos.",
-  miedo: "¡Cuánto ruido hay hoy en la calle!",
-  alegria: "¡Mira, hay un perrito amistoso en la plaza!",
-  calma: "Caminemos despacito por la sombra, sin apuro.",
-};
 
 // ---------- catálogo ----------
 

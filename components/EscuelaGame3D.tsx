@@ -8,6 +8,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { LugarPatio, Npc3D, Orbe } from "@/components/three/EscuelaScene";
+import { elegirLinea } from "@/lib/dialogos";
 import { ESCUELA_AREAS, EscuelaArea, PuertaDef } from "@/lib/escuela";
 import { CONTEXTOS } from "@/lib/contexts";
 import {
@@ -59,7 +60,7 @@ const LUGAR_AVISO: Record<LugarPatio, string> = {
 };
 
 type Dialogo =
-  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
+  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId; linea: string }
   | { tipo: "figura-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise };
@@ -201,7 +202,14 @@ export default function EscuelaGame3D() {
     const emocion = burbujas[id];
     alLlegarRef.current = () => {
       if (id === FIGURA.id) setDialogo({ tipo: "figura-apertura" });
-      else if (emocion) setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
+      else if (emocion)
+        setDialogo({
+          tipo: "npc",
+          npcId: id,
+          nombre: npc.nombre,
+          emocion,
+          linea: elegirLinea(ESC.lineas, emocion, "escuela"),
+        });
       else {
         setAviso(`${npc.nombre} dice: «¡Hola! ¿Jugamos en el recreo?»`);
         setTimeout(() => setAviso(null), 2500);
@@ -426,7 +434,7 @@ export default function EscuelaGame3D() {
         <div className="velo">
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.nombre}</span>
-            <p className="dialogo-texto">«{ESC.lineas[dialogo.emocion]}»</p>
+            <p className="dialogo-texto">«{dialogo.linea}»</p>
             <button
               className="opcion-coloreada"
               style={{ background: EMOTIONS[dialogo.emocion].color }}

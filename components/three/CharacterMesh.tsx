@@ -258,17 +258,18 @@ export default function CharacterMesh({
         </group>
       )}
 
-      {/* pelo según estilo (bloques) */}
+      {/* pelo según estilo (bloques); la tapa sobresale 0.03 de la cabeza
+          para que ninguna cara quede coplanar con ella (evita z-fighting) */}
       {pelo === "corto" && (
-        <mesh position={[0, 1.93, -0.02]} castShadow>
-          <boxGeometry args={[0.6, 0.16, 0.6]} />
+        <mesh position={[0, 1.93, 0]} castShadow>
+          <boxGeometry args={[0.62, 0.16, 0.62]} />
           <meshStandardMaterial color={colorPelo} />
         </mesh>
       )}
       {pelo === "largo" && (
         <>
-          <mesh position={[0, 1.93, -0.02]} castShadow>
-            <boxGeometry args={[0.6, 0.16, 0.6]} />
+          <mesh position={[0, 1.93, 0]} castShadow>
+            <boxGeometry args={[0.62, 0.16, 0.62]} />
             <meshStandardMaterial color={colorPelo} />
           </mesh>
           <mesh position={[0, 1.52, -0.31]} castShadow>

@@ -115,12 +115,5 @@ export const PLAZA_BURBUJAS: Record<string, EmotionId> = {
   clara: "verguenza",
 };
 
-// diálogos relacionados al juego (varias emociones)
-export const PLAZA_LINEAS: Record<EmotionId, string> = {
-  enojo: "¡Me empujaron en la fila del resbalín!",
-  tristeza: "Nadie me pasa la pelota cuando juego…",
-  verguenza: "Me caí del columpio y todos me miraron.",
-  miedo: "El inflable es muy alto, me da susto saltar.",
-  alegria: "¡Vamos juntos al resbalín, va a ser genial!",
-  calma: "Descansemos un ratito en el pasto, ¿ya?",
-};
+// diálogos relacionados al juego (varias frases por emoción; ver lib/dialogos.ts)
+export { LINEAS_PLAZA as PLAZA_LINEAS } from "./dialogos";

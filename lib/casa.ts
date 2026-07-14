@@ -166,11 +166,5 @@ export const BURBUJAS_FIESTA: Record<string, EmotionId> = {
   seba: "enojo",
 };
 
-export const LINEAS_FIESTA: Record<EmotionId, string> = {
-  enojo: "¡Me sacaron el último choripán justo cuando lo iba a comer!",
-  tristeza: "Mi mejor amiga no pudo venir al asado…",
-  verguenza: "Se me cayó la bebida encima y todos me miraron.",
-  miedo: "Hay mucha gente y mucho ruido… no conozco a todos.",
-  alegria: "¡El asado está quedando delicioso! ¿Quieres probar un pedacito?",
-  calma: "Sentémonos un ratito a mirar cómo sube el humito.",
-};
+// varias frases por emoción; ver lib/dialogos.ts
+export { LINEAS_FIESTA } from "./dialogos";

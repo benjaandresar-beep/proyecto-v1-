@@ -21,6 +21,7 @@ import {
   PuertaDef,
 } from "@/lib/casa";
 import { CONTEXTOS } from "@/lib/contexts";
+import { elegirLinea } from "@/lib/dialogos";
 import {
   ChargeMap,
   CHARGE_MAX,
@@ -82,7 +83,7 @@ function npcDef(id: string): Npc3D {
 }
 
 type Dialogo =
-  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId }
+  | { tipo: "npc"; npcId: string; nombre: string; emocion: EmotionId; linea: string }
   | { tipo: "figura-apertura" }
   | { tipo: "herramientas" }
   | { tipo: "puente"; ejercicio: Exercise }
@@ -267,7 +268,20 @@ export default function CasaGame3D() {
     const emocion = burbujas[id];
     alLlegarRef.current = () => {
       if (id === FIGURA.id) setDialogo({ tipo: "figura-apertura" });
-      else if (emocion) setDialogo({ tipo: "npc", npcId: id, nombre: npc.nombre, emocion });
+      else if (emocion) {
+        const esInvitado = INVITADOS_IDS.includes(id);
+        setDialogo({
+          tipo: "npc",
+          npcId: id,
+          nombre: npc.nombre,
+          emocion,
+          linea: elegirLinea(
+            esInvitado ? LINEAS_FIESTA : CASA.lineas,
+            emocion,
+            esInvitado ? "fiesta" : "casa"
+          ),
+        });
+      }
       else {
         setAviso(`${npc.nombre} dice: «¡Hola! ¿Cómo estás hoy?»`);
         setTimeout(() => setAviso(null), 2500);
@@ -599,7 +613,7 @@ export default function CasaGame3D() {
           <div className="dialogo">
             <span className="dialogo-hablante">{dialogo.nombre}</span>
             <p className="dialogo-texto">
-              «{(INVITADOS_IDS.includes(dialogo.npcId) ? LINEAS_FIESTA : CASA.lineas)[dialogo.emocion]}»
+              «{dialogo.linea}»
             </p>
             <button
               className="opcion-coloreada"
